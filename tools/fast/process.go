@@ -119,6 +119,14 @@ func (f *Filecoin) StopDaemon(ctx context.Context) error {
 	return f.teardownStderrCapturing()
 }
 
+func (f *Filecoin) Shell() error {
+	return f.core.Shell(f.ctx, []testbedi.Core{})
+}
+
+func (f *Filecoin) Dir() string {
+	return f.core.Dir()
+}
+
 // DumpLastOutput writes all the output (args, exit-code, error, stderr, stdout) of the last ran
 // command from RunCmdWithStdin, RunCmdJSONWithStdin, or RunCmdLDJSONWithStdin.
 func (f *Filecoin) DumpLastOutput(w io.Writer) {
