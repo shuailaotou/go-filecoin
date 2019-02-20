@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"gx/ipfs/QmXWZCd8jfaHmt4UDSnjKmGcrQMw95bDGWqEeVLVJjoANX/go-ipfs-files"
 	logging "gx/ipfs/QmcuXC5cxs79ro2cUuHs4HQ2bkDLJUYokwL8aivcX6HW3C/go-log"
@@ -82,28 +83,37 @@ func main() {
 	options[lpfc.AttrUseSmallSectors] = "true" // Enable small sectors
 	options[lpfc.AttrFilecoinBinary] = binpath // Use the repo binary
 
-	// The genesis process is the filecoin node that loads the miner that is
-	// define with power in the genesis block, and the prefunnded wallet
-	genesis, err := env.NewProcess(ctx, lpfc.PluginName, options, fast.EnvironmentOpts{})
-	if err != nil {
-		exit(err, "failed to create genesis process")
-		return
-	}
-
 	genesisURI := env.GenesisCar()
 	genesisMiner, err := env.GenesisMiner()
 	if err != nil {
 		exit(err, "failed to retrieve miner information from genesis")
 		return
 	}
+	fastenvOpts := fast.EnvironmentOpts{
+		InitOpts:   []fast.ProcessInitOption{fast.POGenesisFile(genesisURI)},
+		DaemonOpts: []fast.ProcessDaemonOption{fast.POBlockTime(time.Second * 5)},
+	}
 
-	err = series.SetupGenesisNode(ctx, genesis, genesisURI, genesisMiner.Address, files.NewReaderFile(genesisMiner.Owner))
-	exit(err, "failed series.SetupGenesisNode")
+	// The genesis process is the filecoin node that loads the miner that is
+	// define with power in the genesis block, and the prefunnded wallet
+	genesis, err := env.NewProcess(ctx, lpfc.PluginName, options, fastenvOpts)
+	if err != nil {
+		exit(err, "failed to create genesis process")
+		return
+	}
+
+	defer genesis.DumpLastOutput(os.Stdout)
+
+	err = series.SetupGenesisNode(ctx, genesis, genesisMiner.Address, files.NewReaderFile(genesisMiner.Owner))
+	if err != nil {
+		exit(err, "failed series.SetupGenesisNode")
+		return
+	}
 
 	// Create the processes that we will use to become miners
 	var miners []*fast.Filecoin
 	for i := 0; i < count; i++ {
-		miner, err := env.NewProcess(ctx, lpfc.PluginName, options, fast.EnvironmentOpts{})
+		miner, err := env.NewProcess(ctx, lpfc.PluginName, options, fastenvOpts)
 		if err != nil {
 			exit(err, "failed to create miner process")
 			return
@@ -137,7 +147,7 @@ func main() {
 	var deals []*storage.DealResponse
 
 	for _, miner := range miners {
-		err = series.InitAndStart(ctx, miner, genesisURI)
+		err = series.InitAndStart(ctx, miner)
 		if err != nil {
 			exit(err, "failed series.InitAndStart")
 			return
@@ -193,7 +203,7 @@ func main() {
 			return
 		}
 
-		err = series.InitAndStart(ctx, client, genesisURI)
+		err = series.InitAndStart(ctx, client)
 		if err != nil {
 			exit(err, "failed series.InitAndStart")
 			return

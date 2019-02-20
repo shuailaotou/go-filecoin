@@ -6,13 +6,13 @@ import (
 	"github.com/filecoin-project/go-filecoin/tools/fast"
 )
 
-func InitAndStart(ctx context.Context, node *fast.Filecoin, gcURI string) error {
+func InitAndStart(ctx context.Context, node *fast.Filecoin) error {
 
-	if _, err := node.InitDaemon(ctx, "--genesisfile", gcURI); err != nil {
+	if _, err := node.InitDaemon(ctx); err != nil {
 		return err
 	}
 
-	if _, err := node.StartDaemon(ctx, true, "--block-time", "5s"); err != nil {
+	if _, err := node.StartDaemon(ctx, true); err != nil {
 		return err
 	}
 
