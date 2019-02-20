@@ -85,11 +85,23 @@ func NewFilecoinProcess(ctx context.Context, c IPTBCoreExt, eo EnvironmentOpts) 
 
 // InitDaemon initializes the filecoin daemon process.
 func (f *Filecoin) InitDaemon(ctx context.Context, args ...string) (testbedi.Output, error) {
+	if len(args) == 0 {
+		for _, opt := range f.initOpts {
+			args = append(args, opt()...)
+		}
+	}
+
 	return f.core.Init(ctx, args...)
 }
 
 // StartDaemon starts the filecoin daemon process.
 func (f *Filecoin) StartDaemon(ctx context.Context, wait bool, args ...string) (testbedi.Output, error) {
+	if len(args) == 0 {
+		for _, opt := range f.daemonOpts {
+			args = append(args, opt()...)
+		}
+	}
+
 	out, err := f.core.Start(ctx, wait, args...)
 	if err != nil {
 		return nil, err

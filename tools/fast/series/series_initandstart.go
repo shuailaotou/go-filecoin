@@ -7,7 +7,6 @@ import (
 )
 
 func InitAndStart(ctx context.Context, node *fast.Filecoin) error {
-
 	if _, err := node.InitDaemon(ctx); err != nil {
 		return err
 	}
