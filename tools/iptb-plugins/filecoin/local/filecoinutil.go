@@ -49,20 +49,10 @@ func (l *Localfilecoin) getPID() (int, error) {
 	return strconv.Atoi(string(b))
 }
 
-func getcurrPath(envs []string) string {
-	for _, e := range envs {
-		if strings.HasPrefix(e, "PATH=") {
-			return strings.SplitAfter(e, "=")[1]
-		}
-	}
-
-	panic("wat")
-}
-
 func (l *Localfilecoin) env() ([]string, error) {
 	envs := os.Environ()
 
-	currPath := getcurrPath(envs)
+	currPath := os.Getenv("PATH")
 	pathList := filepath.SplitList(currPath)
 	pathList = append([]string{filepath.Dir(l.binPath)}, pathList...)
 	newPath := strings.Join(pathList, string(filepath.ListSeparator))
@@ -71,6 +61,7 @@ func (l *Localfilecoin) env() ([]string, error) {
 	envs = filecoin.UpdateOrAppendEnv(envs, "GO_FILECOIN_LOG_LEVEL", l.logLevel)
 	envs = filecoin.UpdateOrAppendEnv(envs, "GO_FILECOIN_LOG_JSON", l.logJSON)
 	envs = filecoin.UpdateOrAppendEnv(envs, "PATH", newPath)
+	os.Setenv("PATH", newPath)
 
 	return envs, nil
 }
