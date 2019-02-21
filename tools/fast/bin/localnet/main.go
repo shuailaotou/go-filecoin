@@ -6,7 +6,9 @@ package main
 // on the users computer. The network will stay standing till the program is closed.
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"io"
@@ -33,7 +35,10 @@ var (
 	count     int           = 5
 	blocktime time.Duration = 5 * time.Second
 	err       error         = nil
+	fil       int           = 100000
 	balance   big.Int
+
+	SectorSize int64 = 1016
 )
 
 func init() {
@@ -50,51 +55,51 @@ func init() {
 	// block time value.
 	series.GlobalSleepDelay = blocktime
 
-	fmt.Println(count)
+	// Set the inital balance
+	balance.SetInt64(int64(100 * fil))
 }
-
-// TODO(tperson) We need to provide the same flags to the genesis that
-//               are provided to the other nodes.
 
 func main() {
 	ctx := context.Background()
 
-	balance.SetUint64(1000 * 1000000000)
-	fil := 100000000
-
 	if len(workdir) == 0 {
 		workdir, err = ioutil.TempDir("", "localnet")
 		if err != nil {
-			exit(err)
+			handleError(err)
 		}
+	}
+
+	if ok, err := isEmpty(workdir); !ok {
+		handleError(err, "workdir is not empty;")
+		return
 	}
 
 	env, err := fast.NewEnvironmentMemoryGenesis(&balance, workdir)
 	if err != nil {
-		exit(err)
+		handleError(err)
 		return
 	}
 
 	// Defer the teardown, this will shuteverything down for us
-	// defer env.Teardown(ctx)
+	defer env.Teardown(ctx)
 
 	binpath, err := testhelpers.GetFilecoinBinary()
 	if err != nil {
-		exit(err, "no binary was found, please build go-filecoin;")
+		handleError(err, "no binary was found, please build go-filecoin;")
 		return
 	}
 
 	// Setup localfilecoin plugin options
 	options := make(map[string]string)
-	options[lpfc.AttrLogJSON] = "1"            // Enable JSON logs
-	options[lpfc.AttrLogLevel] = "5"           // Set log level to Debug
+	options[lpfc.AttrLogJSON] = "0"            // Disable JSON logs
+	options[lpfc.AttrLogLevel] = "4"           // Set log level to Info
 	options[lpfc.AttrUseSmallSectors] = "true" // Enable small sectors
 	options[lpfc.AttrFilecoinBinary] = binpath // Use the repo binary
 
 	genesisURI := env.GenesisCar()
 	genesisMiner, err := env.GenesisMiner()
 	if err != nil {
-		exit(err, "failed to retrieve miner information from genesis")
+		handleError(err, "failed to retrieve miner information from genesis;")
 		return
 	}
 	fastenvOpts := fast.EnvironmentOpts{
@@ -106,15 +111,13 @@ func main() {
 	// define with power in the genesis block, and the prefunnded wallet
 	genesis, err := env.NewProcess(ctx, lpfc.PluginName, options, fastenvOpts)
 	if err != nil {
-		exit(err, "failed to create genesis process")
+		handleError(err, "failed to create genesis process;")
 		return
 	}
 
-	defer genesis.DumpLastOutput(os.Stdout)
-
 	err = series.SetupGenesisNode(ctx, genesis, genesisMiner.Address, files.NewReaderFile(genesisMiner.Owner))
 	if err != nil {
-		exit(err, "failed series.SetupGenesisNode")
+		handleError(err, "failed series.SetupGenesisNode;")
 		return
 	}
 
@@ -123,7 +126,7 @@ func main() {
 	for i := 0; i < count; i++ {
 		miner, err := env.NewProcess(ctx, lpfc.PluginName, options, fastenvOpts)
 		if err != nil {
-			exit(err, "failed to create miner process")
+			handleError(err, "failed to create miner process;")
 			return
 		}
 
@@ -157,19 +160,19 @@ func main() {
 	for _, miner := range miners {
 		err = series.InitAndStart(ctx, miner)
 		if err != nil {
-			exit(err, "failed series.InitAndStart")
+			handleError(err, "failed series.InitAndStart;")
 			return
 		}
 
 		err = series.Connect(ctx, genesis, miner)
 		if err != nil {
-			exit(err, "failed series.Connect")
+			handleError(err, "failed series.Connect;")
 			return
 		}
 
 		err = series.SendFilecoinDefaults(ctx, genesis, miner, fil)
 		if err != nil {
-			exit(err, "failed series.SendFilecoinDefaults")
+			handleError(err, "failed series.SendFilecoinDefaults;")
 			return
 		}
 
@@ -180,15 +183,16 @@ func main() {
 
 		ask, err := series.CreateMinerWithAsk(ctx, miner, pledge, collateral, price, expiry)
 		if err != nil {
-			exit(err, "failed series.CreateMinerWithAsk")
+			handleError(err, "failed series.CreateMinerWithAsk;")
 			return
 		}
 
-		data := files.NewBytesFile([]byte("Hello World!"))
-
-		_, deal, err := series.ImportAndStore(ctx, genesis, ask, data)
+		var data bytes.Buffer
+		dataReader := io.LimitReader(rand.Reader, SectorSize)
+		dataReader = io.TeeReader(dataReader, &data)
+		_, deal, err := series.ImportAndStore(ctx, genesis, ask, files.NewReaderFile(dataReader))
 		if err != nil {
-			exit(err, "failed series.ImportAndStore")
+			handleError(err, "failed series.ImportAndStore;")
 			return
 		}
 
@@ -199,44 +203,57 @@ func main() {
 	for _, deal := range deals {
 		err = series.WaitForDealState(ctx, genesis, deal, storage.Posted)
 		if err != nil {
-			exit(err, "failed series.WaitForDealState")
+			handleError(err, "failed series.WaitForDealState;")
 			return
 		}
 	}
 
 	if shell {
-		client, err := env.NewProcess(ctx, lpfc.PluginName, options, fast.EnvironmentOpts{})
+		client, err := env.NewProcess(ctx, lpfc.PluginName, options, fastenvOpts)
 		if err != nil {
-			exit(err, "failed to create client process")
+			handleError(err, "failed to create client process;")
 			return
 		}
 
 		err = series.InitAndStart(ctx, client)
 		if err != nil {
-			exit(err, "failed series.InitAndStart")
+			handleError(err, "failed series.InitAndStart;")
 			return
 		}
 
 		err = series.Connect(ctx, genesis, client)
 		if err != nil {
-			exit(err, "failed series.Connect")
+			handleError(err, "failed series.Connect;")
 			return
 		}
 
 		err = series.SendFilecoinDefaults(ctx, genesis, client, fil)
 		if err != nil {
-			exit(err, "failed series.SendFilecoinDefaults")
+			handleError(err, "failed series.SendFilecoinDefaults;")
+			return
+		}
+
+		interval, err := client.StartLogCapture()
+		if err != nil {
+			handleError(err, "failed to start log capture;")
 			return
 		}
 
 		if err := client.Shell(); err != nil {
-			exit(err, "failed to run client shell")
+			handleError(err, "failed to run client shell;")
 			return
 		}
+
+		interval.Stop()
+		fmt.Println("===================================")
+		fmt.Println("===================================")
+		io.Copy(os.Stdout, interval)
+		fmt.Println("===================================")
+		fmt.Println("===================================")
 	}
 
 	fmt.Println("Finished!")
-	fmt.Println("Ctrl-C to exit")
+	fmt.Println("Ctrl-C to handleError")
 
 	signals := make(chan os.Signal)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -244,7 +261,7 @@ func main() {
 	<-signals
 }
 
-func exit(err error, msg ...string) {
+func handleError(err error, msg ...string) {
 	if err == nil {
 		return
 	}
