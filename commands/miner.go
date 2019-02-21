@@ -157,7 +157,7 @@ Collateral must be greater than 0.001 FIL per pledged sector.`,
 	},
 }
 
-type minerSetPriceResult struct {
+type MinerSetPriceResult struct {
 	GasUsed               types.GasUnits
 	MinerSetPriceResponse porcelain.MinerSetPriceResponse
 	Preview               bool
@@ -219,7 +219,7 @@ This command waits for the ask to be mined.`,
 			if err != nil {
 				return err
 			}
-			return re.Emit(&minerSetPriceResult{
+			return re.Emit(&MinerSetPriceResult{
 				GasUsed:               usedGas,
 				Preview:               true,
 				MinerSetPriceResponse: porcelain.MinerSetPriceResponse{},
@@ -238,15 +238,15 @@ This command waits for the ask to be mined.`,
 			return err
 		}
 
-		return re.Emit(&minerSetPriceResult{
+		return re.Emit(&MinerSetPriceResult{
 			GasUsed:               types.NewGasUnits(0),
 			Preview:               false,
 			MinerSetPriceResponse: res,
 		})
 	},
-	Type: &minerSetPriceResult{},
+	Type: &MinerSetPriceResult{},
 	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, res *minerSetPriceResult) error {
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, res *MinerSetPriceResult) error {
 			if res.Preview {
 				output := strconv.FormatUint(uint64(res.GasUsed), 10)
 				_, err := w.Write([]byte(output))

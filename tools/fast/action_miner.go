@@ -117,7 +117,7 @@ func (f *Filecoin) MinerPower(ctx context.Context, minerAddr address.Address) (*
 
 // MinerSetPrice runs the `miner set-price` command against the filecoin process
 func (f *Filecoin) MinerSetPrice(ctx context.Context, fil *big.Float, expiry *big.Int, options ...ActionOption) (*porcelain.MinerSetPriceResponse, error) {
-	var out porcelain.MinerSetPriceResponse
+	var out commands.MinerSetPriceResult
 
 	sExpiry := expiry.String()
 	sFil := fil.Text('f', -1)
@@ -134,5 +134,5 @@ func (f *Filecoin) MinerSetPrice(ctx context.Context, fil *big.Float, expiry *bi
 		return nil, err
 	}
 
-	return &out, nil
+	return &out.MinerSetPriceResponse, nil
 }
