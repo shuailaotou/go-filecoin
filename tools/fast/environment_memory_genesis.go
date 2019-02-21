@@ -198,7 +198,7 @@ func (e *EnvironmentMemoryGenesis) startGenesisServer() error {
 	e.genesisServerAddr = ln.Addr().String()
 
 	go func() {
-		if err := e.genesisServer.Serve(ln); err != nil {
+		if err := e.genesisServer.Serve(ln); err != nil && err != http.ErrServerClosed {
 			e.log.Errorf("Genesis file server: %s", err)
 		}
 	}()
