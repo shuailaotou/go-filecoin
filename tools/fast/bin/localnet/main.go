@@ -28,11 +28,12 @@ import (
 )
 
 var (
-	workdir string = ""
-	shell   bool   = false
-	count   int    = 5
-	err     error  = nil
-	balance big.Int
+	workdir   string        = ""
+	shell     bool          = false
+	count     int           = 5
+	blocktime time.Duration = 5 * time.Second
+	err       error         = nil
+	balance   big.Int
 )
 
 func init() {
@@ -41,8 +42,15 @@ func init() {
 	flag.StringVar(&workdir, "workdir", workdir, "set the working directory")
 	flag.BoolVar(&shell, "shell", shell, "drop into a shell")
 	flag.IntVar(&count, "count", count, "number of miners")
+	flag.DurationVar(&blocktime, "blocktime", blocktime, "duration for blocktime")
 
 	flag.Parse()
+
+	// Set the series global sleep delay to 5 seconds, we will also use this as our
+	// block time value.
+	series.GlobalSleepDelay = blocktime
+
+	fmt.Println(count)
 }
 
 // TODO(tperson) We need to provide the same flags to the genesis that
@@ -68,7 +76,7 @@ func main() {
 	}
 
 	// Defer the teardown, this will shuteverything down for us
-	defer env.Teardown(ctx)
+	// defer env.Teardown(ctx)
 
 	binpath, err := testhelpers.GetFilecoinBinary()
 	if err != nil {
@@ -91,7 +99,7 @@ func main() {
 	}
 	fastenvOpts := fast.EnvironmentOpts{
 		InitOpts:   []fast.ProcessInitOption{fast.POGenesisFile(genesisURI)},
-		DaemonOpts: []fast.ProcessDaemonOption{fast.POBlockTime(time.Second * 5)},
+		DaemonOpts: []fast.ProcessDaemonOption{fast.POBlockTime(series.GlobalSleepDelay)},
 	}
 
 	// The genesis process is the filecoin node that loads the miner that is
