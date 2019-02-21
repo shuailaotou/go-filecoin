@@ -24,6 +24,7 @@ type nodeAPI struct {
 	paych           *nodePaych
 	ping            *nodePing
 	retrievalClient *nodeRetrievalClient
+	stats           *nodeStats
 	swarm           *nodeSwarm
 	version         *nodeVersion
 }
@@ -54,6 +55,7 @@ func New(node *node.Node) api.API {
 	api.paych = newNodePaych(api, porcelainAPI)
 	api.ping = newNodePing(api)
 	api.retrievalClient = newNodeRetrievalClient(api)
+	api.stats = newNodeStats(api)
 	api.swarm = newNodeSwarm(api)
 	api.version = newNodeVersion(api)
 
@@ -106,6 +108,10 @@ func (api *nodeAPI) Ping() api.Ping {
 
 func (api *nodeAPI) RetrievalClient() api.RetrievalClient {
 	return api.retrievalClient
+}
+
+func (api *nodeAPI) Stats() api.Stats {
+	return api.stats
 }
 
 func (api *nodeAPI) Swarm() api.Swarm {

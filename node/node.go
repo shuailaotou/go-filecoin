@@ -24,6 +24,7 @@ import (
 	"gx/ipfs/QmXixGGfd98hN2dA5YiPHWANY3sjmHfZBQk3mLiQUo6NLJ/go-bitswap"
 	bsnet "gx/ipfs/QmXixGGfd98hN2dA5YiPHWANY3sjmHfZBQk3mLiQUo6NLJ/go-bitswap/network"
 	dhtprotocol "gx/ipfs/QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN/go-libp2p-protocol"
+	p2pmetrics "gx/ipfs/QmZZseAa9xcK6tT3YpaShNUAEpyRAoWmUL5ojH3uGNepAc/go-libp2p-metrics"
 	bserv "gx/ipfs/QmZsGVGCqMCNzHLNMB6q4F6yyvomqf1VxwhJwSfgo1NGaF/go-blockservice"
 	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
 	"gx/ipfs/QmcNGX5RaxPPCYwa6yGXM1EcUbrreTTinixLcYGmMwf1sx/go-libp2p"
@@ -80,8 +81,9 @@ type pubSubProcessorFunc func(ctx context.Context, msg *pubsub.Message) error
 
 // Node represents a full Filecoin node.
 type Node struct {
-	host     host.Host
-	PeerHost host.Host
+	host             host.Host
+	PeerHost         host.Host
+	BandwidthTracker p2pmetrics.Reporter
 
 	Consensus   consensus.Protocol
 	ChainReader chain.ReadStore
@@ -163,13 +165,14 @@ type Node struct {
 
 // Config is a helper to aid in the construction of a filecoin node.
 type Config struct {
-	BlockTime   time.Duration
-	Libp2pOpts  []libp2p.Option
-	OfflineMode bool
-	Verifier    proofs.Verifier
-	Rewarder    consensus.BlockRewarder
-	Repo        repo.Repo
-	IsRelay     bool
+	BlockTime        time.Duration
+	Libp2pOpts       []libp2p.Option
+	OfflineMode      bool
+	Verifier         proofs.Verifier
+	Rewarder         consensus.BlockRewarder
+	Repo             repo.Repo
+	IsRelay          bool
+	BandwidthTracker p2pmetrics.Reporter
 }
 
 // ConfigOpt is a configuration option for a filecoin node.
@@ -270,6 +273,16 @@ func (nc *Config) buildHost(ctx context.Context, makeDHT func(host host.Host) (r
 		return makeDHT(h)
 	}
 
+	opts := []libp2p.Option{
+		libp2p.Routing(makeDHTRightType),
+		libp2p.EnableAutoRelay(),
+		libp2p.ChainOptions(nc.Libp2pOpts...),
+	}
+
+	if nc.BandwidthTracker != nil {
+		opts = append(opts, libp2p.BandwidthReporter(nc.BandwidthTracker))
+	}
+
 	if nc.IsRelay {
 		cfg := nc.Repo.Config()
 		publicAddr, err := ma.NewMultiaddr(cfg.Swarm.PublicRelayAddress)
@@ -285,30 +298,23 @@ func (nc *Config) buildHost(ctx context.Context, makeDHT func(host host.Host) (r
 			}
 			return nil
 		}
-		relayHost, err := libp2p.New(
-			ctx,
-			libp2p.EnableRelay(circuit.OptHop),
-			libp2p.EnableAutoRelay(),
-			libp2p.Routing(makeDHTRightType),
-			publicAddrFactory,
-			libp2p.ChainOptions(nc.Libp2pOpts...),
-		)
-		if err != nil {
-			return nil, err
-		}
-		// Set up autoNATService as a streamhandler on the host.
-		_, err = autonatsvc.NewAutoNATService(ctx, relayHost)
-		if err != nil {
-			return nil, err
-		}
-		return relayHost, nil
+		opts = append(opts, libp2p.EnableRelay(circuit.OptHop), publicAddrFactory)
 	}
-	return libp2p.New(
-		ctx,
-		libp2p.EnableAutoRelay(),
-		libp2p.Routing(makeDHTRightType),
-		libp2p.ChainOptions(nc.Libp2pOpts...),
-	)
+
+	h, err := libp2p.New(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	if nc.IsRelay { // TODO: kinda odd that relay implies running an autonat service
+		// Set up autoNATService as a streamhandler on the host.
+		_, err = autonatsvc.NewAutoNATService(ctx, h)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return h, nil
 }
 
 // Build instantiates a filecoin Node from the settings specified in the config.
@@ -339,6 +345,9 @@ func (nc *Config) Build(ctx context.Context) (*Node, error) {
 			router = r
 			return r, err
 		}
+
+		nc.BandwidthTracker = p2pmetrics.NewBandwidthCounter()
+
 		var err error
 		peerHost, err = nc.buildHost(ctx, makeDHT)
 		if err != nil {
@@ -417,25 +426,26 @@ func (nc *Config) Build(ctx context.Context) (*Node, error) {
 	}))
 
 	nd := &Node{
-		blockservice: bservice,
-		Blockstore:   bs,
-		cborStore:    &cstOffline,
-		OnlineStore:  &cstOnline,
-		Consensus:    nodeConsensus,
-		ChainReader:  chainReader,
-		Syncer:       chainSyncer,
-		PowerTable:   powerTable,
-		PorcelainAPI: PorcelainAPI,
-		Exchange:     bswap,
-		host:         peerHost,
-		MsgPool:      msgPool,
-		OfflineMode:  nc.OfflineMode,
-		PeerHost:     peerHost,
-		Ping:         pinger,
-		Repo:         nc.Repo,
-		Wallet:       fcWallet,
-		blockTime:    nc.BlockTime,
-		Router:       router,
+		blockservice:     bservice,
+		Blockstore:       bs,
+		cborStore:        &cstOffline,
+		OnlineStore:      &cstOnline,
+		Consensus:        nodeConsensus,
+		ChainReader:      chainReader,
+		Syncer:           chainSyncer,
+		PowerTable:       powerTable,
+		PorcelainAPI:     PorcelainAPI,
+		Exchange:         bswap,
+		host:             peerHost,
+		MsgPool:          msgPool,
+		OfflineMode:      nc.OfflineMode,
+		PeerHost:         peerHost, // why do we have this AND host?
+		BandwidthTracker: nc.BandwidthTracker,
+		Ping:             pinger,
+		Repo:             nc.Repo,
+		Wallet:           fcWallet,
+		blockTime:        nc.BlockTime,
+		Router:           router,
 	}
 
 	// Bootstrapping network peers.
@@ -484,7 +494,7 @@ func (node *Node) Start(ctx context.Context) error {
 		// To keep things simple for now this info is not used.
 		err := node.Syncer.HandleNewBlocks(context.Background(), cids)
 		if err != nil {
-			log.Infof("error handling blocks: %s", types.NewSortedCidSet(cids...).String())
+			log.Infof("error handling blocks: %s: %s", types.NewSortedCidSet(cids...).String(), err)
 		}
 	}
 	node.HelloSvc = hello.New(node.Host(), node.ChainReader.GenesisCid(), syncCallBack, node.ChainReader.Head)

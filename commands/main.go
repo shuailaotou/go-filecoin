@@ -166,6 +166,7 @@ var rootSubcmdsDaemon = map[string]*cmds.Command{
 	"ping":             pingCmd,
 	"retrieval-client": retrievalClientCmd,
 	"show":             showCmd,
+	"stats":            statsCmd,
 	"swarm":            swarmCmd,
 	"version":          versionCmd,
 	"wallet":           walletCmd,

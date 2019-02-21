@@ -15,6 +15,7 @@ type API interface {
 	Paych() Paych
 	Ping() Ping
 	RetrievalClient() RetrievalClient
+	Stats() Stats
 	Swarm() Swarm
 	Version() Version
 }
