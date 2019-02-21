@@ -37,7 +37,7 @@ func (f *Filecoin) MinerCreate(ctx context.Context, pledge uint64, collateral *b
 
 // MinerUpdatePeerid runs the `miner update-peerid` command against the filecoin process
 func (f *Filecoin) MinerUpdatePeerid(ctx context.Context, minerAddr address.Address, pid peer.ID, options ...ActionOption) (cid.Cid, error) {
-	var out cid.Cid
+	var out commands.MinerUpdatePeerIDResult
 
 	args := []string{"go-filecoin", "miner", "update-peerid"}
 
@@ -51,7 +51,7 @@ func (f *Filecoin) MinerUpdatePeerid(ctx context.Context, minerAddr address.Addr
 		return cid.Undef, err
 	}
 
-	return out, nil
+	return out.Cid, nil
 }
 
 // MinerAddAsk runs the `miner add-ask` command against the filecoin process
