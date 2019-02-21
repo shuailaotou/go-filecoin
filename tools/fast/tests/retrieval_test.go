@@ -22,6 +22,10 @@ import (
 	localplugin "github.com/filecoin-project/go-filecoin/tools/iptb-plugins/filecoin/local"
 )
 
+var (
+	SectorSize int64 = 1016
+)
+
 func init() {
 	// Enabling debug logging provides a lot of insight into what commands are
 	// being executed
@@ -34,7 +38,7 @@ func init() {
 
 // TestRetrieval exercises storing and retreiving with the filecoin protocols
 func TestRetrieval(t *testing.T) {
-	// This test should run in 100 block times, and no longer
+	// This test should run in 20 block times, with 60 seconds for sealing, and no longer
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(20*series.GlobalSleepDelay).Add(60*time.Second))
 	defer cancel()
 
@@ -55,8 +59,8 @@ func TestRetrieval(t *testing.T) {
 
 	// Setup options for nodes.
 	options := make(map[string]string)
-	options[localplugin.AttrLogJSON] = "1"                               // Enable JSON logs
-	options[localplugin.AttrLogLevel] = "5"                              // Set log level to Debug
+	options[localplugin.AttrLogJSON] = "0"                               // Disable JSON logs
+	options[localplugin.AttrLogLevel] = "4"                              // Set log level to Info
 	options[localplugin.AttrUseSmallSectors] = "true"                    // Enable small sectors
 	options[localplugin.AttrFilecoinBinary] = th.MustGetFilecoinBinary() // Enable small sectors
 
@@ -125,7 +129,7 @@ func TestRetrieval(t *testing.T) {
 	// Store some data with the miner with the given ask, returns the cid for
 	// the imported data, and the deal which was created
 	var data bytes.Buffer
-	dataReader := io.LimitReader(rand.Reader, 1016)
+	dataReader := io.LimitReader(rand.Reader, SectorSize)
 	dataReader = io.TeeReader(dataReader, &data)
 	dcid, deal, err := series.ImportAndStore(ctx, client, ask, files.NewReaderFile(dataReader))
 	require.NoError(err)
