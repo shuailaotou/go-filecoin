@@ -106,14 +106,50 @@ func init() {
 			}
 		}
 
+		if err := os.Mkdir(filepath.Join(dir, "bin"), 0755); err != nil {
+			return nil, fmt.Errorf("could not make dir: %s", err)
+		}
+
+		dst := filepath.Join(dir, "bin", filepath.Base(binPath))
+		if err := copyFileContents(binPath, dst); err != nil {
+			return nil, err
+		}
+
+		if err := os.Chmod(dst, 0755); err != nil {
+			return nil, err
+		}
+
 		return &Localfilecoin{
 			dir:             dir,
-			binPath:         binPath,
+			binPath:         dst,
 			logLevel:        logLevel,
 			logJSON:         logJSON,
 			useSmallSectors: useSmallSectors,
 		}, nil
 	}
+}
+
+func copyFileContents(src, dst string) (err error) {
+	in, err := os.Open(src)
+	if err != nil {
+		return
+	}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return
+	}
+	defer func() {
+		cerr := out.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
+	if _, err = io.Copy(out, in); err != nil {
+		return
+	}
+	err = out.Sync()
+	return
 }
 
 /** Core Interface **/
