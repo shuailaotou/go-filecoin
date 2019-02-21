@@ -2,7 +2,6 @@ package series
 
 import (
 	"context"
-	"time"
 
 	"github.com/filecoin-project/go-filecoin/protocol/storage"
 	"github.com/filecoin-project/go-filecoin/tools/fast"
@@ -22,7 +21,7 @@ func WaitForDealState(ctx context.Context, client *fast.Filecoin, deal *storage.
 			break
 		}
 
-		time.Sleep(time.Second * 30)
+		SleepDelay()
 	}
 
 	return nil
