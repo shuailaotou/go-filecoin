@@ -1,4 +1,4 @@
-package commands
+package commands_test
 
 import (
 	"os"
@@ -17,7 +17,7 @@ import (
 
 func TestAddrsNewAndList(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	assert := ast.New(t)
 
 	d := th.NewDaemon(t).Start()
 	defer d.ShutdownSuccess()
@@ -35,7 +35,7 @@ func TestAddrsNewAndList(t *testing.T) {
 
 func TestWalletBalance(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
+	assert := ast.New(t)
 
 	d := th.NewDaemon(t).Start()
 	defer d.ShutdownSuccess()
@@ -56,11 +56,13 @@ func TestWalletBalance(t *testing.T) {
 }
 
 func TestAddrLookupAndUpdate(t *testing.T) {
-	assert := assert.New(t)
-	d1 := th.NewDaemon(t, th.WithMiner(fixtures.TestMiners[0]), th.KeyFile(fixtures.KeyFilePaths()[1])).Start()
+	assert := ast.New(t)
+	d1 := th.NewDaemon(t, th.DefaultAddress(fixtures.TestAddresses[1]), th.WithMiner(fixtures.TestMiners[0]),
+		th.KeyFile(fixtures.KeyFilePaths()[1])).Start()
 	defer d1.ShutdownSuccess()
 
-	d := th.NewDaemon(t, th.WithMiner(fixtures.TestMiners[0]), th.KeyFile(fixtures.KeyFilePaths()[0])).Start()
+	d := th.NewDaemon(t, th.DefaultAddress(fixtures.TestAddresses[0]),
+		th.WithMiner(fixtures.TestMiners[0]), th.KeyFile(fixtures.KeyFilePaths()[0])).Start()
 	defer d.ShutdownSuccess()
 
 	d1.ConnectSuccess(d)
@@ -98,7 +100,7 @@ func TestAddrLookupAndUpdate(t *testing.T) {
 }
 
 func TestWalletLoadFromFile(t *testing.T) {
-	assert := assert.New(t)
+	assert := ast.New(t)
 
 	d := th.NewDaemon(t).Start()
 	defer d.ShutdownSuccess()
