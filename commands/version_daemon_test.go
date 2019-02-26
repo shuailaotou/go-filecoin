@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	th "github.com/filecoin-project/go-filecoin/testhelpers"
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
 )
 
 func TestVersion(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	var gitOut []byte
 	var err error

@@ -8,15 +8,15 @@ import (
 	"github.com/filecoin-project/go-filecoin/api"
 	th "github.com/filecoin-project/go-filecoin/testhelpers"
 
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
-	req "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
 )
 
 func TestActorDaemon(t *testing.T) {
 	t.Parallel()
 	t.Run("actor ls --enc json returns NDJSON containing all actors in the state tree", func(t *testing.T) {
-		require := req.New(t)
-		assert := ast.New(t)
+		require := require.New(t)
+		assert := assert.New(t)
 
 		d := th.NewDaemon(t).Start()
 		defer d.ShutdownSuccess()

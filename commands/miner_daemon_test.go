@@ -8,7 +8,6 @@ import (
 	"github.com/filecoin-project/go-filecoin/api"
 	"github.com/filecoin-project/go-filecoin/consensus"
 	"github.com/filecoin-project/go-filecoin/types"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"math/big"
 	"strings"
@@ -16,9 +15,10 @@ import (
 	"testing"
 	"time"
 
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
-	req "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
 	"gx/ipfs/QmTu65MVbemtUxJEWgsTtzv9Zv9P8rvmqNA4eG9TrTRGYc/go-libp2p-peer"
+
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
 
 	"github.com/filecoin-project/go-filecoin/actor/builtin/storagemarket"
 	"github.com/filecoin-project/go-filecoin/address"
@@ -29,7 +29,7 @@ import (
 
 func TestMinerHelp(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	t.Run("--help shows general miner help", func(t *testing.T) {
 		t.Parallel()
@@ -122,7 +122,7 @@ func runHelpSuccess(t *testing.T, args ...string) string {
 
 func TestMinerPledge(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	fi, err := ioutil.TempFile("", "gengentest")
 	if err != nil {
@@ -168,8 +168,8 @@ func TestMinerPledge(t *testing.T) {
 
 func TestMinerCreate(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 
 	testAddr, err := address.NewFromString(fixtures.TestAddresses[2])
 	require.NoError(err)
@@ -290,7 +290,7 @@ func TestMinerCreate(t *testing.T) {
 
 func TestMinerSetPrice(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	d1 := th.NewDaemon(t, th.WithMiner(fixtures.TestMiners[0]), th.KeyFile(fixtures.KeyFilePaths()[0]), th.DefaultAddress(fixtures.TestAddresses[0])).Start()
 	defer d1.ShutdownSuccess()
@@ -305,10 +305,33 @@ func TestMinerSetPrice(t *testing.T) {
 	assert.Equal(`"62"`, configuredPrice.ReadStdoutTrimNewlines())
 }
 
+func TestMinerAddAskSuccess(t *testing.T) {
+	t.Parallel()
+	assert := assert.New(t)
+
+	d1 := th.NewDaemon(t, th.WithMiner(fixtures.TestMiners[0]), th.KeyFile(fixtures.KeyFilePaths()[2])).Start()
+	defer d1.ShutdownSuccess()
+	d := th.NewDaemon(t, th.KeyFile(fixtures.KeyFilePaths()[2])).Start()
+	defer d.ShutdownSuccess()
+	d1.ConnectSuccess(d)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		miner := d.RunSuccess("miner", "create", "--from", fixtures.TestAddresses[2], "--price", "0", "--limit", "300", "100", "200")
+		addr, err := address.NewFromString(strings.Trim(miner.ReadStdout(), "\n"))
+		assert.NoError(err)
+		assert.NotEqual(addr, address.Address{})
+		wg.Done()
+	}()
+	// ensure mining runs after the command in our goroutine
+	d1.MineAndPropagate(time.Second, d)
+	wg.Wait()
+}
+
 func TestMinerCreateChargesGas(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 
 	miningMinerOwnerAddr, err := address.NewFromString(fixtures.TestAddresses[0])
 	require.NoError(err)
@@ -360,7 +383,7 @@ func queryBalance(t *testing.T, d *th.TestDaemon, actorAddr address.Address) *ty
 
 func TestMinerAddAskFail(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 	d1 := th.NewDaemon(t, th.WithMiner(fixtures.TestMiners[0]), th.KeyFile(fixtures.KeyFilePaths()[2])).Start()
 	defer d1.ShutdownSuccess()
 	d := th.NewDaemon(t, th.CmdTimeout(time.Second*90), th.KeyFile(fixtures.KeyFilePaths()[2])).Start()
@@ -409,7 +432,7 @@ func TestMinerAddAskFail(t *testing.T) {
 
 func TestMinerOwner(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	fi, err := ioutil.TempFile("", "gengentest")
 	if err != nil {
@@ -447,7 +470,7 @@ func TestMinerOwner(t *testing.T) {
 
 func TestMinerPower(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	fi, err := ioutil.TempFile("", "gengentest")
 	if err != nil {

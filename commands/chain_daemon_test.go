@@ -12,16 +12,16 @@ import (
 	th "github.com/filecoin-project/go-filecoin/testhelpers"
 	"github.com/filecoin-project/go-filecoin/types"
 
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
-	req "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
 )
 
 func TestChainDaemon(t *testing.T) {
 	t.Parallel()
 	t.Run("chain ls with json encoding returns the whole chain as json", func(t *testing.T) {
 		t.Parallel()
-		assert := ast.New(t)
-		require := req.New(t)
+		assert := assert.New(t)
+		require := require.New(t)
 
 		d := makeDaemonWithMinerAndStart(t)
 		defer d.ShutdownSuccess()
@@ -55,8 +55,8 @@ func TestChainDaemon(t *testing.T) {
 
 	t.Run("chain head with chain of size 1 returns genesis block", func(t *testing.T) {
 		t.Parallel()
-		assert := ast.New(t)
-		require := req.New(t)
+		assert := assert.New(t)
+		require := require.New(t)
 
 		d := th.NewDaemon(t).Start()
 		defer d.ShutdownSuccess()
@@ -73,8 +73,8 @@ func TestChainDaemon(t *testing.T) {
 
 	t.Run("chain ls with text encoding returns only CIDs", func(t *testing.T) {
 		t.Parallel()
-		assert := ast.New(t)
-		require := req.New(t)
+		assert := assert.New(t)
+		require := require.New(t)
 
 		daemon := makeDaemonWithMinerAndStart(t)
 		defer daemon.ShutdownSuccess()
@@ -96,7 +96,7 @@ func TestChainDaemon(t *testing.T) {
 
 	t.Run("chain ls --long returns CIDs, Miner, block height and message count", func(t *testing.T) {
 		t.Parallel()
-		assert := ast.New(t)
+		assert := assert.New(t)
 
 		daemon := makeDaemonWithMinerAndStart(t)
 		defer daemon.ShutdownSuccess()

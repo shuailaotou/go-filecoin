@@ -5,12 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
-
 	"github.com/filecoin-project/go-filecoin/fixtures"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
 )
 
-func parseInt(assert *ast.Assertions, s string) *big.Int {
+func parseInt(assert *assert.Assertions, s string) *big.Int {
 	i := new(big.Int)
 	i, err := i.SetString(strings.TrimSpace(s), 10)
 	assert.True(err, "couldn't parse as big.Int %q", s)
@@ -19,7 +18,7 @@ func parseInt(assert *ast.Assertions, s string) *big.Int {
 
 func TestMiningGenBlock(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 	d := makeDaemonWithMinerAndStart(t)
 	defer d.ShutdownSuccess()
 

@@ -8,12 +8,12 @@ import (
 	"github.com/filecoin-project/go-filecoin/fixtures"
 	"github.com/filecoin-project/go-filecoin/protocol/storage"
 	th "github.com/filecoin-project/go-filecoin/testhelpers"
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
 )
 
 func TestListAsks(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	minerDaemon := makeDaemonWithMinerAndStart(t)
 	defer minerDaemon.ShutdownSuccess()
@@ -26,7 +26,7 @@ func TestListAsks(t *testing.T) {
 }
 
 func TestStorageDealsAfterRestart(t *testing.T) {
-	assert := ast.New(t)
+	assert := assert.New(t)
 	minerDaemon := th.NewDaemon(t,
 		th.WithMiner(fixtures.TestMiners[0]),
 		th.KeyFile(fixtures.KeyFilePaths()[0]),
@@ -67,7 +67,7 @@ func TestStorageDealsAfterRestart(t *testing.T) {
 
 func TestDuplicateDeals(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	miner := makeDaemonWithMinerAndStart(t)
 	defer miner.ShutdownSuccess()
@@ -99,7 +99,7 @@ func TestDuplicateDeals(t *testing.T) {
 
 func TestDealWithSameDataAndDifferentMiners(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	miner1 := makeDaemonWithMinerAndStart(t)
 	defer miner1.ShutdownSuccess()
@@ -137,7 +137,7 @@ func TestDealWithSameDataAndDifferentMiners(t *testing.T) {
 
 func TestVoucherPersistenceAndPayments(t *testing.T) {
 	t.Parallel()
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	miner := makeDaemonWithMinerAndStart(t)
 	defer miner.ShutdownSuccess()
