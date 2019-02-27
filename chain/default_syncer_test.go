@@ -20,8 +20,8 @@ import (
 	"github.com/filecoin-project/go-filecoin/testhelpers"
 	"github.com/filecoin-project/go-filecoin/types"
 
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
-	req "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
 )
 
 var (
@@ -75,7 +75,7 @@ func init() {
 // This function sets global variables according to the tests needs.  The
 // test chain's basic structure is always the same, but some tests want
 // mocked stateRoots or parent weight calculations from different consensus protocols.
-func requireSetTestChain(require *req.Assertions, con consensus.Protocol, mockStateRoots bool) {
+func requireSetTestChain(require *require.Assertions, con consensus.Protocol, mockStateRoots bool) {
 
 	var err error
 	// see powerTableForWidenTest
@@ -248,7 +248,7 @@ func containsTipSet(tsasSlice []*chain.TipSetAndState, ts types.TipSet) bool {
 	return false
 }
 
-func requireTsAdded(require *req.Assertions, chain chain.Store, ts types.TipSet) {
+func requireTsAdded(require *require.Assertions, chain chain.Store, ts types.TipSet) {
 	ctx := context.Background()
 	h, err := ts.Height()
 	require.NoError(err)
@@ -268,7 +268,7 @@ func requireTsAdded(require *req.Assertions, chain chain.Store, ts types.TipSet)
 	}
 }
 
-func assertTsAdded(assert *ast.Assertions, chainStore chain.Store, ts types.TipSet) {
+func assertTsAdded(assert *assert.Assertions, chainStore chain.Store, ts types.TipSet) {
 	ctx := context.Background()
 	h, err := ts.Height()
 	assert.NoError(err)
@@ -288,7 +288,7 @@ func assertTsAdded(assert *ast.Assertions, chainStore chain.Store, ts types.TipS
 	}
 }
 
-func assertNoAdd(assert *ast.Assertions, chainStore chain.Store, cids []cid.Cid) {
+func assertNoAdd(assert *assert.Assertions, chainStore chain.Store, cids []cid.Cid) {
 	ctx := context.Background()
 	// Tip Index correctly updated
 	_, err := chainStore.GetTipSetAndState(ctx, types.NewSortedCidSet(cids...).String())
@@ -299,17 +299,17 @@ func assertNoAdd(assert *ast.Assertions, chainStore chain.Store, cids []cid.Cid)
 	}
 }
 
-func requireHead(require *req.Assertions, chain chain.Store, head types.TipSet) {
+func requireHead(require *require.Assertions, chain chain.Store, head types.TipSet) {
 	gotHead := chain.Head()
 	require.Equal(head, gotHead)
 }
 
-func assertHead(assert *ast.Assertions, chain chain.Store, head types.TipSet) {
+func assertHead(assert *assert.Assertions, chain chain.Store, head types.TipSet) {
 	gotHead := chain.Head()
 	assert.Equal(head, gotHead)
 }
 
-func requirePutBlocks(require *req.Assertions, cst *hamt.CborIpldStore, blks ...*types.Block) []cid.Cid {
+func requirePutBlocks(require *require.Assertions, cst *hamt.CborIpldStore, blks ...*types.Block) []cid.Cid {
 	ctx := context.Background()
 	var cids []cid.Cid
 	for _, blk := range blks {
@@ -324,8 +324,8 @@ func requirePutBlocks(require *req.Assertions, cst *hamt.CborIpldStore, blks ...
 
 // Syncer syncs a single block
 func TestSyncOneBlock(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 	expectedTs := testhelpers.RequireNewTipSet(require, link1blk1)
@@ -340,8 +340,8 @@ func TestSyncOneBlock(t *testing.T) {
 
 // Syncer syncs a single tipset.
 func TestSyncOneTipSet(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 
@@ -356,8 +356,8 @@ func TestSyncOneTipSet(t *testing.T) {
 // Syncer syncs one tipset, block by block.
 func TestSyncTipSetBlockByBlock(t *testing.T) {
 	pt := testhelpers.NewTestPowerTableView(1, 1)
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestWithPowerTable(require, pt)
 	ctx := context.Background()
 	expTs1 := testhelpers.RequireNewTipSet(require, link1blk1)
@@ -378,8 +378,8 @@ func TestSyncTipSetBlockByBlock(t *testing.T) {
 
 // Syncer syncs a chain, tipset by tipset.
 func TestSyncChainTipSetByTipSet(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 
@@ -411,8 +411,8 @@ func TestSyncChainTipSetByTipSet(t *testing.T) {
 
 // Syncer syncs a whole chain given only the head cids.
 func TestSyncChainHead(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 
@@ -432,8 +432,8 @@ func TestSyncChainHead(t *testing.T) {
 
 // Syncer determines the heavier fork.
 func TestSyncIgnoreLightFork(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 
@@ -472,8 +472,8 @@ func TestSyncIgnoreLightFork(t *testing.T) {
 
 // Correctly sync a heavier fork
 func TestHeavierFork(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 
@@ -543,8 +543,8 @@ func TestHeavierFork(t *testing.T) {
 
 // Syncer errors if blocks don't form a tipset
 func TestBlocksNotATipSet(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 
@@ -560,8 +560,8 @@ func TestBlocksNotATipSet(t *testing.T) {
 
 // Syncer is capable of recovering from a fork reorg after Load.
 func TestLoadFork(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, r := initSyncTestDefault(require)
 	ctx := context.Background()
 
@@ -646,8 +646,8 @@ func TestLoadFork(t *testing.T) {
 // The last operation will fail if the state of subset {B1, B2} is not
 // kept in the store because syncing C1 requires retrieving parent state.
 func TestSubsetParent(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, _, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 
@@ -698,8 +698,8 @@ func TestSubsetParent(t *testing.T) {
 
 // Check that the syncer correctly adds widened chain ancestors to the store.
 func TestWidenChainAncestor(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, _ := initSyncTestDefault(require)
 	ctx := context.Background()
 	signer, _ := types.NewMockSignersAndKeyInfo(1)
@@ -780,8 +780,8 @@ func (pt *powerTableForWidenTest) HasPower(ctx context.Context, st state.Tree, b
 // Therefore the syncer should set the head of the store to the union of the links..
 func TestHeaviestIsWidenedAncestor(t *testing.T) {
 	pt := &powerTableForWidenTest{}
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	syncer, chainStore, cst, con := initSyncTestWithPowerTable(require, pt)
 	ctx := context.Background()
 
@@ -860,8 +860,8 @@ func TestHeaviestIsWidenedAncestor(t *testing.T) {
 // and I can't figure out why because we pass in the correct blockstore to createminerwithpower.
 
 func TestTipSetWeightDeep(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	r := repo.NewInMemoryRepo()
 	bs := bstore.NewBlockstore(r.Datastore())
 	cst := hamt.NewCborStore()
@@ -1033,7 +1033,7 @@ func TestTipSetWeightDeep(t *testing.T) {
 	assert.Equal(expectedWeight, measuredWeight)
 }
 
-func requireGetTsas(ctx context.Context, require *req.Assertions, chain chain.Store, key string) *chain.TipSetAndState {
+func requireGetTsas(ctx context.Context, require *require.Assertions, chain chain.Store, key string) *chain.TipSetAndState {
 	tsas, err := chain.GetTipSetAndState(ctx, key)
 	require.NoError(err)
 	return tsas

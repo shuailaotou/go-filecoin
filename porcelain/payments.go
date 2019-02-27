@@ -76,6 +76,9 @@ type CreatePaymentsReturn struct {
 // CreatePayments establishes a payment channel and create multiple payments against it
 func CreatePayments(ctx context.Context, plumbing cpPlumbing, config CreatePaymentsParams) (*CreatePaymentsReturn, error) {
 	// validate
+
+	log.Debugf("\n\n ==============> from = %s, to = %s\n", config.From.String(), config.To.String())
+	fmt.Printf("\n\n ==============> from = %s, to = %s\n", config.From.String(), config.To.String())
 	if config.From.Empty() {
 		return nil, errors.New("From cannot be empty")
 	}
@@ -91,7 +94,7 @@ func CreatePayments(ctx context.Context, plumbing cpPlumbing, config CreatePayme
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not retrieve block height for making payments")
 	}
-
+	log.Debugf("ASDF")
 	// validate that channel expiry gives us enough time
 	lastPayment := currentHeight.Add(types.NewBlockHeight(config.Duration))
 	if config.ChannelExpiry.LessThan(lastPayment) {
@@ -119,6 +122,7 @@ func CreatePayments(ctx context.Context, plumbing cpPlumbing, config CreatePayme
 	// wait for response
 	err = plumbing.MessageWait(ctx, response.ChannelMsgCid, func(block *types.Block, message *types.SignedMessage, receipt *types.MessageReceipt) error {
 		if receipt.ExitCode != 0 {
+			log.Debugf("\n\nEXIT CODE code: %d\n\n", receipt.ExitCode)
 			return fmt.Errorf("createChannel failed %d", receipt.ExitCode)
 		}
 

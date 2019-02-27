@@ -23,7 +23,7 @@ func TestChainDaemon(t *testing.T) {
 		assert := assert.New(t)
 		require := require.New(t)
 
-		d := makeDaemonWithMinerAndStart(t)
+		d := makeTestDaemonWithMinerAndStart(t)
 		defer d.ShutdownSuccess()
 
 		op1 := d.RunSuccess("mining", "once", "--enc", "text")
@@ -76,7 +76,7 @@ func TestChainDaemon(t *testing.T) {
 		assert := assert.New(t)
 		require := require.New(t)
 
-		daemon := makeDaemonWithMinerAndStart(t)
+		daemon := makeTestDaemonWithMinerAndStart(t)
 		defer daemon.ShutdownSuccess()
 
 		var blocks []types.Block
@@ -98,7 +98,7 @@ func TestChainDaemon(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		daemon := makeDaemonWithMinerAndStart(t)
+		daemon := makeTestDaemonWithMinerAndStart(t)
 		defer daemon.ShutdownSuccess()
 
 		newBlockCid := daemon.RunSuccess("mining", "once", "--enc", "text").ReadStdoutTrimNewlines()

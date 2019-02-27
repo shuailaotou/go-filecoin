@@ -26,7 +26,7 @@ func requireSchemaConformance(t *testing.T, jsonBytes []byte, schemaName string)
 	require.Truef(t, result.Valid(), "Error schema validating: %s", string(jsonBytes))
 }
 
-func makeDaemonWithMinerAndStart(t *testing.T) *th.TestDaemon {
+func makeTestDaemonWithMinerAndStart(t *testing.T) *th.TestDaemon {
 	daemon := th.NewDaemon(
 		t,
 		th.DefaultAddress(fixtures.TestAddresses[0]),

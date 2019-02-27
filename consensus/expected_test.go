@@ -11,8 +11,8 @@ import (
 	"github.com/filecoin-project/go-filecoin/state"
 	"github.com/filecoin-project/go-filecoin/testhelpers"
 	"github.com/filecoin-project/go-filecoin/types"
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
-	req "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
 
 	"gx/ipfs/QmNf3wujpV2Y7Lnj2hy2UrmuX8bhMDStRHbnSLh7Ypf36h/go-hamt-ipld"
 	"gx/ipfs/QmRu7tiRnFk9mMPpVECQTBQJqXtmG132jJxA1w9A7TtpBz/go-ipfs-blockstore"
@@ -25,7 +25,7 @@ import (
 )
 
 func TestNewExpected(t *testing.T) {
-	assert := ast.New(t)
+	assert := assert.New(t)
 	t.Run("a new Expected can be created", func(t *testing.T) {
 		cst, bstore, verifier := setupCborBlockstoreProofs()
 		ptv := testhelpers.NewTestPowerTableView(1, 5)
@@ -36,8 +36,8 @@ func TestNewExpected(t *testing.T) {
 
 // TestExpected_NewValidTipSet also tests validateBlockStructure.
 func TestExpected_NewValidTipSet(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 
 	ctx := context.Background()
 	cistore, bstore, verifier := setupCborBlockstoreProofs()
@@ -91,7 +91,7 @@ func requireMakeBlocks(t *testing.T, pTipSet types.TipSet) []*types.Block {
 	minerAddr := address.NewForTestGetter()()
 
 	signerAddr, err := ki[0].Address()
-	req.NoError(t, err)
+	require.NoError(t, err)
 
 	blocks := []*types.Block{
 		testhelpers.NewValidTestBlockFromTipSet(pTipSet, 1, minerAddr, signerAddr, signer),
@@ -106,8 +106,8 @@ func requireMakeBlocks(t *testing.T, pTipSet types.TipSet) []*types.Block {
 // completely set up a valid state tree with a valid matching TipSet.  RunStateTransition is tested
 // with integration tests (see chain_daemon_test.go for example)
 func TestExpected_RunStateTransition_validateMining(t *testing.T) {
-	assert := ast.New(t)
-	require := req.New(t)
+	assert := assert.New(t)
+	require := require.New(t)
 	ctx := context.Background()
 
 	cistore, bstore, verifier := setupCborBlockstoreProofs()
@@ -159,7 +159,7 @@ func TestExpected_RunStateTransition_validateMining(t *testing.T) {
 }
 
 func TestIsWinningTicket(t *testing.T) {
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	minerAddress := address.NewForTestGetter()()
 	ctx := context.Background()
@@ -224,7 +224,7 @@ func TestIsWinningTicket(t *testing.T) {
 }
 
 func TestCompareTicketPower(t *testing.T) {
-	assert := ast.New(t)
+	assert := assert.New(t)
 	cases := []struct {
 		ticket     byte
 		myPower    uint64
@@ -253,7 +253,7 @@ func TestCompareTicketPower(t *testing.T) {
 }
 
 func TestCreateChallenge(t *testing.T) {
-	assert := ast.New(t)
+	assert := assert.New(t)
 
 	cases := []struct {
 		parentTickets  [][]byte

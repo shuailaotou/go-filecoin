@@ -162,6 +162,8 @@ func TestWaitConflicting(t *testing.T) {
 			Parent:     baseTS,
 			GenesisCid: chainStore.GenesisCid(),
 			StateRoot:  baseBlock.StateRoot,
+			Signer:     mockSigner,
+			SignerAddr: addr1,
 		})
 	b1.Messages = []*types.SignedMessage{sm1}
 	b1.Ticket = []byte{0} // block 1 comes first in message application
@@ -172,6 +174,8 @@ func TestWaitConflicting(t *testing.T) {
 			Parent:     baseTS,
 			GenesisCid: chainStore.GenesisCid(),
 			StateRoot:  baseBlock.StateRoot,
+			Signer:     mockSigner,
+			SignerAddr: addr1,
 			Nonce:      uint64(1)})
 	b2.Messages = []*types.SignedMessage{sm2}
 	b2.Ticket = []byte{1}

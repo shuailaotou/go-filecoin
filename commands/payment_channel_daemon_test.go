@@ -25,7 +25,7 @@ func TestPaymentChannelCreateSuccess(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
-	d := makeDaemonWithMinerAndStart(t)
+	d := makeTestDaemonWithMinerAndStart(t)
 	defer d.ShutdownSuccess()
 
 	args := []string{"paych", "create"}
@@ -280,7 +280,7 @@ func TestPaymentChannelCloseSuccess(t *testing.T) {
 
 	targetDaemon := th.NewDaemon(t,
 		th.KeyFile(fixtures.KeyFilePaths()[1]),
-		th.DefaultAddress(fixtures.TestAddresses[0]),
+		th.DefaultAddress(fixtures.TestAddresses[1]),
 		th.WithMiner(fixtures.TestMiners[0])).Start()
 	defer targetDaemon.ShutdownSuccess()
 
@@ -340,15 +340,12 @@ func TestPaymentChannelExtendSuccess(t *testing.T) {
 	})
 }
 
-func daemonTestWithPaymentChannel(t *testing.T, payerAddress *address.Address, targetAddress *address.Address, fundsToLock *types.AttoFIL, eol *types.BlockHeight, f func(*th.TestDaemon, *types.ChannelID)) {
+func daemonTestWithPaymentChannel(t *testing.T, payerAddress *address.Address, targetAddress *address.Address,
+	fundsToLock *types.AttoFIL, eol *types.BlockHeight, f func(*th.TestDaemon, *types.ChannelID)) {
 	assert := assert.New(t)
 
-	d := th.NewDaemon(
-		t,
-		th.DefaultAddress(fixtures.TestAddresses[0]),
-		th.WithMiner(fixtures.TestMiners[0]),
-		th.KeyFile(fixtures.KeyFilePaths()[2]),
-	).Start()
+	// use this call whenever you need a daemon with an owner that can sign things.
+	d := makeTestDaemonWithMinerAndStart(t)
 	defer d.ShutdownSuccess()
 
 	args := []string{"paych", "create"}

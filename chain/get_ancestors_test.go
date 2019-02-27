@@ -9,19 +9,19 @@ import (
 
 	"github.com/filecoin-project/go-filecoin/testhelpers"
 	"github.com/filecoin-project/go-filecoin/types"
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
-	req "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
 )
 
 // setupGetAncestorTests initializes genesis and chain store for tests.
-func setupGetAncestorTests(require *req.Assertions) (context.Context, *hamt.CborIpldStore, chain.Store) {
+func setupGetAncestorTests(require *require.Assertions) (context.Context, *hamt.CborIpldStore, chain.Store) {
 	_, chainStore, cst, _ := initSyncTestDefault(require)
 	return context.Background(), cst, chainStore
 }
 
 // requireGrowChain grows the given store numBlocks single block tipsets from
 // its head.
-func requireGrowChain(ctx context.Context, require *req.Assertions, cst *hamt.CborIpldStore, chainStore chain.Store, numBlocks int) {
+func requireGrowChain(ctx context.Context, require *require.Assertions, cst *hamt.CborIpldStore, chainStore chain.Store, numBlocks int) {
 	link := chainStore.Head()
 	signer, _ := types.NewMockSignersAndKeyInfo(1)
 	signerAddr := signer.Addresses[0]
@@ -48,8 +48,8 @@ func requireGrowChain(ctx context.Context, require *req.Assertions, cst *hamt.Cb
 
 // Happy path
 func TestCollectTipSetsOfHeightAtLeast(t *testing.T) {
-	require := req.New(t)
-	assert := ast.New(t)
+	require := require.New(t)
+	assert := assert.New(t)
 	ctx, cst, chainStore := setupGetAncestorTests(require)
 	chainLen := 15
 	requireGrowChain(ctx, require, cst, chainStore, chainLen-1)
@@ -68,8 +68,8 @@ func TestCollectTipSetsOfHeightAtLeast(t *testing.T) {
 
 // Height at least 0.
 func TestCollectTipSetsOfHeightAtLeastZero(t *testing.T) {
-	require := req.New(t)
-	assert := ast.New(t)
+	require := require.New(t)
+	assert := assert.New(t)
 	ctx, cst, chainStore := setupGetAncestorTests(require)
 	chainLen := 25
 	requireGrowChain(ctx, require, cst, chainStore, chainLen-1)
@@ -88,8 +88,8 @@ func TestCollectTipSetsOfHeightAtLeastZero(t *testing.T) {
 
 // The starting epoch is a null block.
 func TestCollectTipSetsOfHeightAtLeastStartingEpochIsNull(t *testing.T) {
-	require := req.New(t)
-	assert := ast.New(t)
+	require := require.New(t)
+	assert := assert.New(t)
 	ctx, cst, chainStore := setupGetAncestorTests(require)
 	// Add 30 tipsets to the head of the chainStore.
 	len1 := 30
@@ -139,8 +139,8 @@ func TestCollectTipSetsOfHeightAtLeastStartingEpochIsNull(t *testing.T) {
 }
 
 func TestCollectAtMostNTipSets(t *testing.T) {
-	require := req.New(t)
-	assert := ast.New(t)
+	require := require.New(t)
+	assert := assert.New(t)
 	ctx, cst, chainStore := setupGetAncestorTests(require)
 	chainLen := 25
 	requireGrowChain(ctx, require, cst, chainStore, chainLen-1)
@@ -165,8 +165,8 @@ func TestCollectAtMostNTipSets(t *testing.T) {
 // DependentAncestor epochs = 100
 // Lookback = 20
 func TestGetRecentAncestors(t *testing.T) {
-	require := req.New(t)
-	assert := ast.New(t)
+	require := require.New(t)
+	assert := assert.New(t)
 	ctx, cst, chainStore := setupGetAncestorTests(require)
 	chainLen := 200
 	requireGrowChain(ctx, require, cst, chainStore, chainLen-1)
@@ -188,8 +188,8 @@ func TestGetRecentAncestors(t *testing.T) {
 
 // Test case where parameters specify a chain past genesis.
 func TestGetRecentAncestorsTruncates(t *testing.T) {
-	require := req.New(t)
-	assert := ast.New(t)
+	require := require.New(t)
+	assert := assert.New(t)
 	ctx, cst, chainStore := setupGetAncestorTests(require)
 	chainLen := 100
 	requireGrowChain(ctx, require, cst, chainStore, chainLen-1)
@@ -215,8 +215,8 @@ func TestGetRecentAncestorsTruncates(t *testing.T) {
 
 // Test case where no block has the start height in the chain due to null blocks.
 func TestGetRecentAncestorsStartingEpochIsNull(t *testing.T) {
-	require := req.New(t)
-	assert := ast.New(t)
+	require := require.New(t)
+	assert := assert.New(t)
 	ctx, cst, chainStore := setupGetAncestorTests(require)
 	// Add 30 tipsets to the head of the chainStore.
 	len1 := 30

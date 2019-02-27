@@ -102,7 +102,7 @@ func TestProcessTipSetSuccess(t *testing.T) {
 	minerAddr := newAddress()
 
 	toAddr := newAddress()
-	mockSigner, _ := types.NewMockSignersAndKeyInfo(1)
+	mockSigner, _ := types.NewMockSignersAndKeyInfo(2)
 
 	fromAddr1 := mockSigner.Addresses[0]
 	fromAddr2 := mockSigner.Addresses[1]

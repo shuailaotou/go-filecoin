@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	ast "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
-	req "gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
+	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
 
 	"gx/ipfs/QmNf3wujpV2Y7Lnj2hy2UrmuX8bhMDStRHbnSLh7Ypf36h/go-hamt-ipld"
 	"gx/ipfs/QmR8BauakNcBa3RbE4nbQu76PDiJgoQgz8AJdhJuiU4TAw/go-cid"
@@ -21,7 +21,7 @@ import (
 )
 
 // Note: many of these tests use the test chain defined in the init function of default_syncer_test.
-func initStoreTest(ctx context.Context, require *req.Assertions) {
+func initStoreTest(ctx context.Context, require *require.Assertions) {
 	powerTable := &testhelpers.TestView{}
 	r := repo.NewInMemoryRepo()
 	bs := bstore.NewBlockstore(r.Datastore())
@@ -38,7 +38,7 @@ func newChainStore() chain.Store {
 }
 
 // requirePutTestChain adds all test chain tipsets to the passed in chain store.
-func requirePutTestChain(require *req.Assertions, chainStore chain.Store) {
+func requirePutTestChain(require *require.Assertions, chainStore chain.Store) {
 	ctx := context.Background()
 	genTsas := &chain.TipSetAndState{
 		TipSet:          genTS,
@@ -68,7 +68,7 @@ func requirePutTestChain(require *req.Assertions, chainStore chain.Store) {
 	chain.RequirePutTsas(ctx, require, chainStore, link4Tsas)
 }
 
-func requireGetTsasByParentAndHeight(ctx context.Context, require *req.Assertions, chain chain.Store, pKey string, h uint64) []*chain.TipSetAndState {
+func requireGetTsasByParentAndHeight(ctx context.Context, require *require.Assertions, chain chain.Store, pKey string, h uint64) []*chain.TipSetAndState {
 	tsasSlice, err := chain.GetTipSetAndStatesByParentsAndHeight(ctx, pKey, h)
 	require.NoError(err)
 	return tsasSlice
@@ -79,8 +79,8 @@ func requireGetTsasByParentAndHeight(ctx context.Context, require *req.Assertion
 // Adding tipsets to the store doesn't error.
 func TestPutTipSet(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	assert := assert.New(t)
 	cs := newChainStore()
 	genTsas := &chain.TipSetAndState{
 		TipSet:          genTS,
@@ -93,9 +93,9 @@ func TestPutTipSet(t *testing.T) {
 // Tipsets can be retrieved by key (all block cids).
 func TestGetByKey(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
+	assert := assert.New(t)
 	chain := newChainStore()
 
 	requirePutTestChain(require, chain)
@@ -127,9 +127,9 @@ func TestGetByKey(t *testing.T) {
 // Tipsets can be retrieved by parent key (all block cids of parents).
 func TestGetByParent(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
+	assert := assert.New(t)
 	chain := newChainStore()
 
 	requirePutTestChain(require, chain)
@@ -160,9 +160,9 @@ func TestGetByParent(t *testing.T) {
 
 func TestGetMultipleByParent(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
+	assert := assert.New(t)
 	chainStore := newChainStore()
 
 	mockSigner, _ := types.NewMockSignersAndKeyInfo(1)
@@ -203,9 +203,9 @@ func TestGetMultipleByParent(t *testing.T) {
 // All blocks of a tipset can be retrieved after putting their wrapping tipset.
 func TestGetBlocks(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
+	assert := assert.New(t)
 	chain := newChainStore()
 
 	blks := []*types.Block{genesis, link1blk1, link1blk2, link2blk1,
@@ -231,9 +231,9 @@ func TestGetBlocks(t *testing.T) {
 // chain.Store correctly indicates that is has all blocks in put tipsets
 func TestHasAllBlocks(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
+	assert := assert.New(t)
 	chain := newChainStore()
 
 	blks := []*types.Block{genesis, link1blk1, link1blk2, link2blk1,
@@ -256,14 +256,14 @@ func TestHasAllBlocks(t *testing.T) {
 // The constructor call sets the genesis block for the chain store.
 func TestSetGenesis(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
 	chain := newChainStore()
 	requirePutTestChain(require, chain)
 	require.Equal(genCid, chain.GenesisCid())
 }
 
-func assertSetHead(assert *ast.Assertions, chainStore chain.Store, ts types.TipSet) {
+func assertSetHead(assert *assert.Assertions, chainStore chain.Store, ts types.TipSet) {
 	ctx := context.Background()
 	err := chainStore.SetHead(ctx, ts)
 	assert.NoError(err)
@@ -272,9 +272,9 @@ func assertSetHead(assert *ast.Assertions, chainStore chain.Store, ts types.TipS
 // Set and Get Head.
 func TestHead(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
+	assert := assert.New(t)
 	chain := newChainStore()
 	requirePutTestChain(require, chain)
 
@@ -297,9 +297,9 @@ func TestHead(t *testing.T) {
 // LatestState correctly returns the state of the head.
 func TestLatestState(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
+	assert := assert.New(t)
 	r := repo.NewInMemoryRepo()
 	ds := r.Datastore()
 	bs := bstore.NewBlockstore(ds)
@@ -325,7 +325,7 @@ func TestLatestState(t *testing.T) {
 	assert.Equal(genStateRoot, c)
 }
 
-func assertEmptyCh(assert *ast.Assertions, ch <-chan interface{}) {
+func assertEmptyCh(assert *assert.Assertions, ch <-chan interface{}) {
 	select {
 	case <-ch:
 		assert.True(false)
@@ -336,9 +336,9 @@ func assertEmptyCh(assert *ast.Assertions, ch <-chan interface{}) {
 // Head events are propagated on HeadEvents.
 func TestHeadEvents(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
-	assert := ast.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
+	assert := assert.New(t)
 	chainStore := newChainStore()
 	requirePutTestChain(require, chainStore)
 
@@ -376,9 +376,9 @@ func TestHeadEvents(t *testing.T) {
 // Block history reports all ancestors in the chain
 func TestBlockHistory(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	assert := ast.New(t)
-	require := req.New(t)
+	initStoreTest(ctx, require.New(t))
+	assert := assert.New(t)
+	require := require.New(t)
 	chainStore := newChainStore()
 	requirePutTestChain(require, chainStore)
 	assertSetHead(assert, chainStore, genTS) // set the genesis block
@@ -399,9 +399,9 @@ func TestBlockHistory(t *testing.T) {
 
 func TestBlockHistoryCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	initStoreTest(ctx, req.New(t))
-	assert := ast.New(t)
-	require := req.New(t)
+	initStoreTest(ctx, require.New(t))
+	assert := assert.New(t)
+	require := require.New(t)
 	chainStore := newChainStore()
 	requirePutTestChain(require, chainStore)
 	assertSetHead(assert, chainStore, genTS) // set the genesis block
@@ -422,8 +422,8 @@ func TestBlockHistoryCancel(t *testing.T) {
 
 func TestUnknownBlockRetrievalError(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	require := req.New(t)
+	initStoreTest(ctx, require.New(t))
+	require := require.New(t)
 	chainStore := newChainStore()
 	requirePutTestChain(require, chainStore)
 
@@ -461,9 +461,9 @@ func TestUnknownBlockRetrievalError(t *testing.T) {
 // tipset indexes along the heaviest chain.
 func TestLoadAndReboot(t *testing.T) {
 	ctx := context.Background()
-	initStoreTest(ctx, req.New(t))
-	assert := ast.New(t)
-	require := req.New(t)
+	initStoreTest(ctx, require.New(t))
+	assert := assert.New(t)
+	require := require.New(t)
 
 	r := repo.NewInMemoryRepo()
 	ds := r.Datastore()
@@ -474,7 +474,7 @@ func TestLoadAndReboot(t *testing.T) {
 	assertSetHead(assert, chainStore, link4)
 	chainStore.Stop()
 
-	// rebuild chain with same datastore
+	// rebuild chain with same Datastore
 	rebootChain := chain.NewDefaultStore(ds, hamt.NewCborStore(), genCid)
 	err := rebootChain.Load(ctx)
 	assert.NoError(err)
