@@ -5,10 +5,10 @@ import (
 	"io"
 
 	"gx/ipfs/QmR8BauakNcBa3RbE4nbQu76PDiJgoQgz8AJdhJuiU4TAw/go-cid"
-	"gx/ipfs/QmTu65MVbemtUxJEWgsTtzv9Zv9P8rvmqNA4eG9TrTRGYc/go-libp2p-peer"
-	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
 	"gx/ipfs/QmTGxDz2CjBucFzPNTiWwzQmTWdrBnzqbqrMucDYMsjuPb/go-libp2p-net"
+	"gx/ipfs/QmTu65MVbemtUxJEWgsTtzv9Zv9P8rvmqNA4eG9TrTRGYc/go-libp2p-peer"
 	"gx/ipfs/QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN/go-libp2p-protocol"
+	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
 	"gx/ipfs/QmepvmmYNM6q4RaUiwEikQFhgMFHXg2PLhx2E9iaRd3jmS/go-libp2p-pubsub"
 
 	"github.com/filecoin-project/go-filecoin/actor"
@@ -185,7 +185,7 @@ func (api *API) PubSubPublish(topic string, data []byte) error {
 	return api.network.Publish(topic, data)
 }
 
-// NetworkGetHost gets the libp2p host
+// NetworkSetStreamHandler sets the stream handler for the libp2p host
 func (api *API) NetworkSetStreamHandler(pid protocol.ID, handler net.StreamHandler) {
 	api.network.SetStreamHandler(pid, handler)
 }
@@ -195,13 +195,18 @@ func (api *API) NetworkGetPeerID() peer.ID {
 	return api.network.GetPeerID()
 }
 
+// SectorBuilderAddPiece adds a piece to the sectorbuilder
+func (api *API) SectorBuilderAddPiece(ctx context.Context, pi *sectorbuilder.PieceInfo) (sectorID uint64, err error) {
+	return api.sectorForeman.AddPiece(ctx, pi)
+}
+
 // SectorBuilderIsRunning returns a boolean representing whether the sector
 // builder is present or not
 func (api *API) SectorBuilderIsRunning() bool {
 	return api.sectorForeman.IsRunning()
 }
 
-//
+// SectorBuilderReadPieceFromSealedSector reads a piece from a sealed sector
 func (api *API) SectorBuilderReadPieceFromSealedSector(pieceCid cid.Cid) (io.Reader, error) {
 	return api.sectorForeman.ReadPieceFromSealedSector(pieceCid)
 }
@@ -224,6 +229,11 @@ func (api *API) SectorBuilderStart(minerAddr address.Address, lastUsedSectorID u
 // SectorBuilderStop stops the sectorbuilder
 func (api *API) SectorBuilderStop() error {
 	return api.sectorForeman.Stop()
+}
+
+// SectorBuilderGeneratePoST generates PoSt for the sectorbuilder
+func (api *API) SectorBuilderGeneratePoST(req sectorbuilder.GeneratePoSTRequest) (sectorbuilder.GeneratePoSTResponse, error) {
+	return api.sectorForeman.GeneratePoST(req)
 }
 
 // SignBytes uses private key information associated with the given address to sign the given bytes.
