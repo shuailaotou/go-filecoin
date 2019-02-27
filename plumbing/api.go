@@ -2,10 +2,14 @@ package plumbing
 
 import (
 	"context"
+	"io"
 
 	"gx/ipfs/QmR8BauakNcBa3RbE4nbQu76PDiJgoQgz8AJdhJuiU4TAw/go-cid"
 	"gx/ipfs/QmTu65MVbemtUxJEWgsTtzv9Zv9P8rvmqNA4eG9TrTRGYc/go-libp2p-peer"
 	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
+	"gx/ipfs/QmTGxDz2CjBucFzPNTiWwzQmTWdrBnzqbqrMucDYMsjuPb/go-libp2p-net"
+	"gx/ipfs/QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN/go-libp2p-protocol"
+	"gx/ipfs/QmepvmmYNM6q4RaUiwEikQFhgMFHXg2PLhx2E9iaRd3jmS/go-libp2p-pubsub"
 
 	"github.com/filecoin-project/go-filecoin/actor"
 	"github.com/filecoin-project/go-filecoin/address"
@@ -17,6 +21,7 @@ import (
 	"github.com/filecoin-project/go-filecoin/plumbing/mthdsig"
 	"github.com/filecoin-project/go-filecoin/plumbing/ntwk"
 	"github.com/filecoin-project/go-filecoin/plumbing/sf"
+	"github.com/filecoin-project/go-filecoin/proofs/sectorbuilder"
 	"github.com/filecoin-project/go-filecoin/pubsub"
 	"github.com/filecoin-project/go-filecoin/types"
 	"github.com/filecoin-project/go-filecoin/wallet"
@@ -180,9 +185,35 @@ func (api *API) PubSubPublish(topic string, data []byte) error {
 	return api.network.Publish(topic, data)
 }
 
-// NetworkGetPeerID gets the current peer id from Util
+// NetworkGetHost gets the libp2p host
+func (api *API) NetworkSetStreamHandler(pid protocol.ID, handler net.StreamHandler) {
+	api.network.SetStreamHandler(pid, handler)
+}
+
+// NetworkGetPeerID gets the current peer id
 func (api *API) NetworkGetPeerID() peer.ID {
 	return api.network.GetPeerID()
+}
+
+// SectorBuilderIsRunning returns a boolean representing whether the sector
+// builder is present or not
+func (api *API) SectorBuilderIsRunning() bool {
+	return api.sectorForeman.IsRunning()
+}
+
+//
+func (api *API) SectorBuilderReadPieceFromSealedSector(pieceCid cid.Cid) (io.Reader, error) {
+	return api.sectorForeman.ReadPieceFromSealedSector(pieceCid)
+}
+
+// SectorBuilderSealAllStagedSectors seals all staged sectors on the sector builder
+func (api *API) SectorBuilderSealAllStagedSectors(ctx context.Context) error {
+	return api.sectorForeman.SealAllStagedSectors(ctx)
+}
+
+// SectorBuilderSectorSealResults returns results from the sector builder
+func (api *API) SectorBuilderSectorSealResults() <-chan sectorbuilder.SectorSealResult {
+	return api.sectorForeman.SectorSealResults()
 }
 
 // SectorBuilderStart starts the sector builder with a given address and sector id
