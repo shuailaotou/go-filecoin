@@ -48,7 +48,6 @@ func (a *API) ChainBlockHeight(ctx context.Context) (*types.BlockHeight, error) 
 
 // CreatePayments establishes a payment channel and create multiple payments against it
 func (a *API) CreatePayments(ctx context.Context, config CreatePaymentsParams) (*CreatePaymentsReturn, error) {
-	log.Debug("CREATE PAYMENTS ============================================ CREATE PAYMENTS ============================================")
 	return CreatePayments(ctx, a, config)
 }
 

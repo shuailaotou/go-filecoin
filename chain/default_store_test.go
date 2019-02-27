@@ -474,7 +474,7 @@ func TestLoadAndReboot(t *testing.T) {
 	assertSetHead(assert, chainStore, link4)
 	chainStore.Stop()
 
-	// rebuild chain with same Datastore
+	// rebuild chain with same datastore
 	rebootChain := chain.NewDefaultStore(ds, hamt.NewCborStore(), genCid)
 	err := rebootChain.Load(ctx)
 	assert.NoError(err)

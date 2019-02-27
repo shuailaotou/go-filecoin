@@ -77,8 +77,6 @@ type CreatePaymentsReturn struct {
 func CreatePayments(ctx context.Context, plumbing cpPlumbing, config CreatePaymentsParams) (*CreatePaymentsReturn, error) {
 	// validate
 
-	log.Debugf("\n\n ==============> from = %s, to = %s\n", config.From.String(), config.To.String())
-	fmt.Printf("\n\n ==============> from = %s, to = %s\n", config.From.String(), config.To.String())
 	if config.From.Empty() {
 		return nil, errors.New("From cannot be empty")
 	}
@@ -94,7 +92,6 @@ func CreatePayments(ctx context.Context, plumbing cpPlumbing, config CreatePayme
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not retrieve block height for making payments")
 	}
-	log.Debugf("ASDF")
 	// validate that channel expiry gives us enough time
 	lastPayment := currentHeight.Add(types.NewBlockHeight(config.Duration))
 	if config.ChannelExpiry.LessThan(lastPayment) {

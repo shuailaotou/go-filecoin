@@ -104,7 +104,6 @@ func (nd *nodeDaemon) Init(ctx context.Context, opts ...api.DaemonInitOpt) error
 		if newConfig.Wallet.DefaultAddress == (address.Address{}) {
 			return errors.New("must provide --default-address with --miner-address")
 		}
-		fmt.Printf("\n\nWithMiner address = %s", cfg.WithMiner.String())
 		newConfig.Mining.MinerAddress = cfg.WithMiner
 		newConfig.Mining.BlockSignerAddress = newConfig.Wallet.DefaultAddress
 		if err := rep.ReplaceConfig(newConfig); err != nil {

@@ -23,7 +23,6 @@ func newNodeMining(api *nodeAPI) *nodeMining {
 }
 
 func (api *nodeMining) Once(ctx context.Context) (*types.Block, error) {
-
 	nd := api.api.node
 	ts := nd.ChainReader.Head()
 
