@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/go-filecoin/plumbing/msg"
 	"github.com/filecoin-project/go-filecoin/plumbing/mthdsig"
 	"github.com/filecoin-project/go-filecoin/plumbing/ntwk"
+	"github.com/filecoin-project/go-filecoin/plumbing/sf"
 	"github.com/filecoin-project/go-filecoin/pubsub"
 	"github.com/filecoin-project/go-filecoin/types"
 	"github.com/filecoin-project/go-filecoin/wallet"
@@ -29,30 +30,32 @@ import (
 type API struct {
 	logger logging.EventLogger
 
-	chain        chain.ReadStore
-	config       *cfg.Config
-	msgPool      *core.MessagePool
-	msgPreviewer *msg.Previewer
-	msgQueryer   *msg.Queryer
-	msgSender    *msg.Sender
-	msgWaiter    *msg.Waiter
-	network      *ntwk.Network
-	sigGetter    *mthdsig.Getter
-	wallet       *wallet.Wallet
+	chain         chain.ReadStore
+	config        *cfg.Config
+	msgPool       *core.MessagePool
+	msgPreviewer  *msg.Previewer
+	msgQueryer    *msg.Queryer
+	msgSender     *msg.Sender
+	msgWaiter     *msg.Waiter
+	network       *ntwk.Network
+	sectorForeman *sf.SectorForeman
+	sigGetter     *mthdsig.Getter
+	wallet        *wallet.Wallet
 }
 
 // APIDeps contains all the API's dependencies
 type APIDeps struct {
-	Chain        chain.ReadStore
-	Config       *cfg.Config
-	MsgPool      *core.MessagePool
-	MsgPreviewer *msg.Previewer
-	MsgQueryer   *msg.Queryer
-	MsgSender    *msg.Sender
-	MsgWaiter    *msg.Waiter
-	Network      *ntwk.Network
-	SigGetter    *mthdsig.Getter
-	Wallet       *wallet.Wallet
+	Chain         chain.ReadStore
+	Config        *cfg.Config
+	MsgPool       *core.MessagePool
+	MsgPreviewer  *msg.Previewer
+	MsgQueryer    *msg.Queryer
+	MsgSender     *msg.Sender
+	MsgWaiter     *msg.Waiter
+	Network       *ntwk.Network
+	SectorForeman *sf.SectorForeman
+	SigGetter     *mthdsig.Getter
+	Wallet        *wallet.Wallet
 }
 
 // New constructs a new instance of the API.
@@ -60,16 +63,17 @@ func New(deps *APIDeps) *API {
 	return &API{
 		logger: logging.Logger("porcelain"),
 
-		chain:        deps.Chain,
-		config:       deps.Config,
-		msgPool:      deps.MsgPool,
-		msgPreviewer: deps.MsgPreviewer,
-		msgQueryer:   deps.MsgQueryer,
-		msgSender:    deps.MsgSender,
-		msgWaiter:    deps.MsgWaiter,
-		network:      deps.Network,
-		sigGetter:    deps.SigGetter,
-		wallet:       deps.Wallet,
+		chain:         deps.Chain,
+		config:        deps.Config,
+		msgPool:       deps.MsgPool,
+		msgPreviewer:  deps.MsgPreviewer,
+		msgQueryer:    deps.MsgQueryer,
+		msgSender:     deps.MsgSender,
+		msgWaiter:     deps.MsgWaiter,
+		network:       deps.Network,
+		sectorForeman: deps.SectorForeman,
+		sigGetter:     deps.SigGetter,
+		wallet:        deps.Wallet,
 	}
 }
 
@@ -179,6 +183,16 @@ func (api *API) PubSubPublish(topic string, data []byte) error {
 // NetworkGetPeerID gets the current peer id from Util
 func (api *API) NetworkGetPeerID() peer.ID {
 	return api.network.GetPeerID()
+}
+
+// SectorBuilderStart starts the sector builder with a given address and sector id
+func (api *API) SectorBuilderStart(minerAddr address.Address, lastUsedSectorID uint64) error {
+	return api.sectorForeman.Start(minerAddr, lastUsedSectorID)
+}
+
+// SectorBuilderStop stops the sectorbuilder
+func (api *API) SectorBuilderStop() error {
+	return api.sectorForeman.Stop()
 }
 
 // SignBytes uses private key information associated with the given address to sign the given bytes.
