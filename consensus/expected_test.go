@@ -93,28 +93,38 @@ func TestExpected_NewValidTipSet(t *testing.T) {
 	})
 }
 
+// requireMakeBlocks sets up 3 blocks with 3 owner actors and 3 miner actors and puts them in the state tree.
+// the owner actors have associated mockSigners for signing blocks (not implemented yet) and tickets.
 func requireMakeBlocks(ctx context.Context, require *require.Assertions, pTipSet types.TipSet, tree state.Tree, vms vm.StorageMap) []*types.Block {
-	addrNames := []string{"foo", "bar", "bazz"}
-	addrs := make([]address.Address, len(addrNames))
+	// make  a set of owner keypairs so they can sign blocks
+	mockSigner, kis := types.NewMockSignersAndKeyInfo(3)
 
-	for i, name := range addrNames {
-		addrs[i] = address.MakeTestAddress(name)
-		owner := address.MakeTestAddress(fmt.Sprintf("%s%s", name, "Owner"))
-		miner := testhelpers.RequireNewMinerActor(require, vms, addrs[i], owner, []byte{}, 10000, testhelpers.RequireRandomPeerID(), types.NewZeroAttoFIL())
-		tree.SetActor(ctx, addrs[i], miner)
+	// iterate over the keypairs and set up owner actors and miner actors with their own addresses
+	// and add them to the state tree
+	ownerAddrs := make([]address.Address, 3)
+	minerAddrs := make([]address.Address, 3)
+	for i, name := range kis {
+		addr, err := kis[i].Address()
+		require.NoError(err)
+		ownerAddrs[i] = addr
+
+		ownerPubKey, err := kis[i].PublicKey()
+		require.NoError(err)
+		ownerActor := testhelpers.RequireNewAccountActor(require, types.NewZeroAttoFIL())
+		require.NoError(tree.SetActor(ctx, ownerAddrs[i], ownerActor))
+
+		minerAddrs[i] = address.MakeTestAddress(fmt.Sprintf("%s%s", name, "Miner"))
+		minerActor := testhelpers.RequireNewMinerActor(require, vms, minerAddrs[i], ownerAddrs[i],
+			ownerPubKey, 10000, testhelpers.RequireRandomPeerID(), types.NewZeroAttoFIL())
+		require.NoError(tree.SetActor(ctx, minerAddrs[i], minerActor))
 	}
 	stateRoot, err := tree.Flush(ctx)
 	require.NoError(err)
 
-	signer, ki := types.NewMockSignersAndKeyInfo(10)
-	minerAddr := address.NewForTestGetter()()
-	signerAddr, err := ki[0].Address()
-	require.NoError(err)
-
 	blocks := []*types.Block{
-		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddr, signerAddr, signer),
-		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddr, signerAddr, signer),
-		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddr, signerAddr, signer),
+		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[0], ownerAddrs[0], mockSigner),
+		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[1], ownerAddrs[1], mockSigner),
+		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[2], ownerAddrs[2], mockSigner),
 	}
 	return blocks
 }

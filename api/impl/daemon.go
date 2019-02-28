@@ -99,6 +99,9 @@ func (nd *nodeDaemon) Init(ctx context.Context, opts ...api.DaemonInitOpt) error
 		}
 	}
 
+	// We assume that the minerOwner is the same as the default address, so that if you
+	// set up a node with an init file, and you want a miner, we also need to know what address
+	// will be used for block and ticket signing.
 	if cfg.WithMiner != (address.Address{}) {
 		newConfig := rep.Config()
 		if newConfig.Wallet.DefaultAddress == (address.Address{}) {
