@@ -924,9 +924,21 @@ func (node *Node) CreateMiner(ctx context.Context, accountAddr address.Address, 
 	defer func() {
 		log.FinishWithErr(ctx, err)
 	}()
-	pubKey, err := node.getMinerActorPubKey()
+
+	pubKey := []byte{}
+	addrInterface, err := node.PorcelainAPI.ConfigGet("mining.minerAddress")
 	if err != nil {
 		return nil, err
+	}
+	addr, success := addrInterface.(address.Address)
+	if !success {
+		return nil, fmt.Errorf("failed to read miner address")
+	}
+	if (addr != address.Address{}) && node.Wallet.HasAddress(addr) {
+		pubKey, err = node.Wallet.GetPubKeyForAddress(addr)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	smsgCid, err := node.PorcelainAPI.MessageSendWithDefaultAddress(
@@ -959,7 +971,17 @@ func (node *Node) CreateMiner(ctx context.Context, accountAddr address.Address, 
 	}
 
 	// TODO: https://github.com/filecoin-project/go-filecoin/issues/1843
-	blockSignerAddr, err := node.miningOwnerAddress(ctx, minerAddr)
+	res, _, err := node.PorcelainAPI.MessageQuery(
+		ctx,
+		address.Address{},
+		minerAddr,
+		"getOwner",
+	)
+	if err != nil {
+		return &address.Address{}, errors.Wrap(err, "failed to getOwner")
+	}
+
+	blockSignerAddr, err := address.NewFromBytes(res[0])
 	if err != nil {
 		return &minerAddr, err
 	}
@@ -1011,17 +1033,6 @@ func (node *Node) BlockHeight() (*types.BlockHeight, error) {
 		return nil, err
 	}
 	return types.NewBlockHeight(height), nil
-}
-
-// getMinerActorPubKey gets the miner actor public key
-func (node *Node) getMinerActorPubKey() ([]byte, error) {
-	addr := node.Repo.Config().Mining.MinerAddress
-
-	// this is expected if there is no miner
-	if (addr == address.Address{}) || !node.Wallet.HasAddress(addr) {
-		return nil, nil
-	}
-	return node.Wallet.GetPubKeyForAddress(addr)
 }
 
 func (node *Node) handleSubscription(ctx context.Context, f pubSubProcessorFunc, fname string, s pubsub.Subscription, sname string) {
