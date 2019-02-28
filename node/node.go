@@ -993,7 +993,7 @@ func (node *Node) NewAddress() (address.Address, error) {
 // TODO: This should live in a MinerAPI or some such. It's here until we have a proper API layer.
 // TODO: add ability to pass in a KeyInfo to store for signing blocks.
 //       See https://github.com/filecoin-project/go-filecoin/issues/1843
-func (node *Node) CreateMiner(ctx context.Context, accountAddr address.Address, gasPrice types.AttoFIL, gasLimit types.GasUnits, pledge uint64, pid libp2ppeer.ID, collateral *types.AttoFIL) (_ *address.Address, err error) {
+func (node *Node) CreateMiner(ctx context.Context, blockSignerAddr address.Address, gasPrice types.AttoFIL, gasLimit types.GasUnits, pledge uint64, pid libp2ppeer.ID, collateral *types.AttoFIL) (_ *address.Address, err error) {
 
 	// Only create a miner if we don't already have one.
 	if _, err := node.miningAddress(); err != ErrNoMinerAddress {
@@ -1004,14 +1004,15 @@ func (node *Node) CreateMiner(ctx context.Context, accountAddr address.Address, 
 	defer func() {
 		log.FinishWithErr(ctx, err)
 	}()
-	pubKey, err := node.getMinerActorPubKey()
+
+	pubKey, err := node.Wallet.GetPubKeyForAddress(blockSignerAddr)
 	if err != nil {
 		return nil, err
 	}
 
 	smsgCid, err := node.PorcelainAPI.MessageSendWithDefaultAddress(
 		ctx,
-		accountAddr,
+		blockSignerAddr,
 		address.StorageMarketAddress,
 		collateral,
 		gasPrice,
@@ -1036,12 +1037,6 @@ func (node *Node) CreateMiner(ctx context.Context, accountAddr address.Address, 
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	// TODO: https://github.com/filecoin-project/go-filecoin/issues/1843
-	blockSignerAddr, err := node.miningOwnerAddress(ctx, minerAddr)
-	if err != nil {
-		return &minerAddr, err
 	}
 
 	err = node.saveMinerConfig(minerAddr, blockSignerAddr)
@@ -1096,17 +1091,6 @@ func (node *Node) BlockHeight() (*types.BlockHeight, error) {
 		return nil, err
 	}
 	return types.NewBlockHeight(height), nil
-}
-
-// getMinerActorPubKey gets the miner actor public key
-func (node *Node) getMinerActorPubKey() ([]byte, error) {
-	addr := node.Repo.Config().Mining.MinerAddress
-
-	// this is expected if there is no miner
-	if (addr == address.Address{}) || !node.Wallet.HasAddress(addr) {
-		return nil, nil
-	}
-	return node.Wallet.GetPubKeyForAddress(addr)
 }
 
 func (node *Node) handleSubscription(ctx context.Context, f pubSubProcessorFunc, fname string, s pubsub.Subscription, sname string) {

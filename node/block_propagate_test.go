@@ -115,10 +115,11 @@ func TestChainSync(t *testing.T) {
 	signer, ki := types.NewMockSignersAndKeyInfo(1)
 	signerAddr, err := ki[0].Address()
 	require.NoError(t, err)
+	stateRoot := baseTS.ToSlice()[0].StateRoot
 
-	nextBlk1 := testhelpers.NewValidTestBlockFromTipSet(baseTS, 1, minerAddr, signerAddr, signer)
-	nextBlk2 := testhelpers.NewValidTestBlockFromTipSet(baseTS, 2, minerAddr, signerAddr, signer)
-	nextBlk3 := testhelpers.NewValidTestBlockFromTipSet(baseTS, 3, minerAddr, signerAddr, signer)
+	nextBlk1 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 1, minerAddr, signerAddr, signer)
+	nextBlk2 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 2, minerAddr, signerAddr, signer)
+	nextBlk3 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 3, minerAddr, signerAddr, signer)
 
 	assert.NoError(nodes[0].AddNewBlock(ctx, nextBlk1))
 	assert.NoError(nodes[0].AddNewBlock(ctx, nextBlk2))

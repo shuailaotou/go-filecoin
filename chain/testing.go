@@ -102,7 +102,7 @@ func MkFakeChildCore(parent types.TipSet,
 
 	pIDs := parent.ToSortedCidSet()
 
-	newBlock := th.NewValidTestBlockFromTipSet(parent, height, minerAddr, signerAddr, signer)
+	newBlock := th.NewValidTestBlockFromTipSet(parent, stateRoot, height, minerAddr, signerAddr, signer)
 
 	// Override fake values with our values
 	newBlock.Parents = pIDs

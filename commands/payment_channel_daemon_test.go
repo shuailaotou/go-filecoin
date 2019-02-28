@@ -345,7 +345,12 @@ func daemonTestWithPaymentChannel(t *testing.T, payerAddress *address.Address, t
 	assert := assert.New(t)
 
 	// use this call whenever you need a daemon with an owner that can sign things.
-	d := makeTestDaemonWithMinerAndStart(t)
+	d := th.NewDaemon(
+		t,
+		th.DefaultAddress(payerAddress.String()),
+		th.WithMiner(fixtures.TestMiners[0]),
+		th.KeyFile(fixtures.KeyFilePaths()[2]),
+	).Start()
 	defer d.ShutdownSuccess()
 
 	args := []string{"paych", "create"}

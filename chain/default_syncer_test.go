@@ -443,6 +443,7 @@ func TestSyncIgnoreLightFork(t *testing.T) {
 
 	forkblk1 := chain.RequireMkFakeChild(require,
 		chain.FakeChildParams{
+			MinerAddr:  minerAddress,
 			Signer:     signer,
 			SignerAddr: signerAddr,
 			Parent:     forkbase,
@@ -485,6 +486,7 @@ func TestHeavierFork(t *testing.T) {
 		Parent:     forkbase,
 		GenesisCid: genCid,
 		StateRoot:  genStateRoot,
+		MinerAddr:  minerAddress,
 		Signer:     signer,
 		SignerAddr: signerAddr,
 		Nonce:      uint64(1),
@@ -580,10 +582,11 @@ func TestLoadFork(t *testing.T) {
 	fakeChildParams := chain.FakeChildParams{
 		Parent:     forkbase,
 		GenesisCid: genCid,
+		MinerAddr:  minerAddress,
+		Nonce:      uint64(1),
 		StateRoot:  genStateRoot,
 		Signer:     signer,
 		SignerAddr: signerAddr,
-		Nonce:      uint64(1),
 	}
 
 	forklink1blk1 := chain.RequireMkFakeChild(require, fakeChildParams)
@@ -667,10 +670,10 @@ func TestSubsetParent(t *testing.T) {
 	fakeChildParams := chain.FakeChildParams{
 		Parent:     forkbase,
 		GenesisCid: genCid,
+		MinerAddr:  minerAddress,
 		StateRoot:  genStateRoot,
 		Signer:     signer,
 		SignerAddr: signerAddr,
-		Nonce:      uint64(0),
 	}
 
 	forkblk1 := chain.RequireMkFakeChild(require, fakeChildParams)
@@ -706,6 +709,7 @@ func TestWidenChainAncestor(t *testing.T) {
 	signerAddr := signer.Addresses[0]
 
 	fakeChildParams := chain.FakeChildParams{
+		MinerAddr:  minerAddress,
 		Parent:     link1,
 		GenesisCid: genCid,
 		StateRoot:  genStateRoot,

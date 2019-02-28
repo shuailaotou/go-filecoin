@@ -159,6 +159,7 @@ func TestWaitConflicting(t *testing.T) {
 
 	b1 := chain.RequireMkFakeChild(require,
 		chain.FakeChildParams{
+			MinerAddr:  minerAddr,
 			Parent:     baseTS,
 			GenesisCid: chainStore.GenesisCid(),
 			StateRoot:  baseBlock.StateRoot,
@@ -171,6 +172,7 @@ func TestWaitConflicting(t *testing.T) {
 
 	b2 := chain.RequireMkFakeChild(require,
 		chain.FakeChildParams{
+			MinerAddr:  minerAddr,
 			Parent:     baseTS,
 			GenesisCid: chainStore.GenesisCid(),
 			StateRoot:  baseBlock.StateRoot,
