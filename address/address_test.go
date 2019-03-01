@@ -24,7 +24,11 @@ func TestIDAddress(t *testing.T) {
 	addr := NewIDAddress(uint64(rand.Int()))
 	require.Equal(ID, addr.Protocol())
 
-	maybe := Decode(Encode(Mainnet, addr))
+	str, err := encode(Mainnet, addr)
+	require.NoError(err)
+
+	maybe, err := decode(str)
+	require.NoError(err)
 	require.Equal(addr, maybe)
 
 }
@@ -38,7 +42,11 @@ func TestSecp256k1Address(t *testing.T) {
 	addr := NewSecp256k1Address(crypto.ECDSAPubToBytes(sk.Public().(*ecdsa.PublicKey)))
 	require.Equal(SECP256K1, addr.Protocol())
 
-	maybe := Decode(Encode(Mainnet, addr))
+	str, err := encode(Mainnet, addr)
+	require.NoError(err)
+
+	maybe, err := decode(str)
+	require.NoError(err)
 	require.Equal(addr, maybe)
 
 }
@@ -52,7 +60,11 @@ func TestActorAddress(t *testing.T) {
 	addr := NewActorAddress(actorMsg)
 	require.Equal(Actor, addr.Protocol())
 
-	maybe := Decode(Encode(Mainnet, addr))
+	str, err := encode(Mainnet, addr)
+	require.NoError(err)
+
+	maybe, err := decode(str)
+	require.NoError(err)
 	require.Equal(addr, maybe)
 
 }
@@ -65,7 +77,11 @@ func TestBLSAddress(t *testing.T) {
 	addr := NewBLSAddress(pk[:])
 	require.Equal(BLS, addr.Protocol())
 
-	maybe := Decode(Encode(Mainnet, addr))
+	str, err := encode(Mainnet, addr)
+	require.NoError(err)
+
+	maybe, err := decode(str)
+	require.NoError(err)
 	require.Equal(addr, maybe)
 
 }

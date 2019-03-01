@@ -2,26 +2,40 @@ package address
 
 import (
 	"bytes"
-	"encoding/base32"
+	"errors"
 	"fmt"
 	"strconv"
 
 	"gx/ipfs/QmSKyB5faguXT4NqbrXpnRXqaVj5DhSm7x9BtzFydBY1UK/go-leb128"
 	"gx/ipfs/QmZp3eKdYQHHAneECmeK6HhiMwTPufmjC8DuuaGKv3unvx/blake2b-simd"
 	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
+	cbor "gx/ipfs/QmcZLyosDwMKdB6NLRsiss9HXzDPhVhhRtPy67JFKTDQDX/go-ipld-cbor"
+	"gx/ipfs/QmdBzoMxsBpojBfN1cv5GnKtB7sfYBMoLH7p9qSyEVYXcu/refmt/obj/atlas"
 )
 
 var log = logging.Logger("address")
 
-const PayloadHashLength = 20
-const ChecksumHashLength = 4
+func init() {
+	cbor.RegisterCborType(addressAtlasEntry)
 
-var payloadHashConfig = &blake2b.Config{Size: PayloadHashLength}
-var checksumHashConfig = &blake2b.Config{Size: ChecksumHashLength}
+	TestAddress = NewActorAddress([]byte("satoshi"))
+	TestAddress2 = NewActorAddress([]byte("nakamoto"))
 
-const encodeStd = "abcdefghijklmnopqrstuvwxyz234567"
+	NetworkAddress = NewActorAddress([]byte("filecoin"))
+	StorageMarketAddress = NewActorAddress([]byte("storage"))
+	PaymentBrokerAddress = NewActorAddress([]byte("payments"))
+}
 
-var AddressEncoding = base32.NewEncoding(encodeStd)
+var addressAtlasEntry = atlas.BuildEntry(Address{}).Transform().
+	TransformMarshal(atlas.MakeMarshalTransformFunc(
+		func(a Address) ([]byte, error) {
+			return []byte(a.str), nil
+		})).
+	TransformUnmarshal(atlas.MakeUnmarshalTransformFunc(
+		func(x []byte) (Address, error) {
+			return Address{string(x)}, nil
+		})).
+	Complete()
 
 /*
 
@@ -76,6 +90,30 @@ func (a Address) Payload() []byte {
 	return []byte(a.str[1:])
 }
 
+func (a Address) Bytes() []byte {
+	return []byte(a.str)
+}
+
+func (a Address) String() string {
+	str, err := encode(Mainnet, a)
+	if err != nil {
+		panic(err)
+	}
+	return str
+}
+
+func (a Address) Equal(b Address) bool {
+	return bytes.Equal(a.Bytes(), b.Bytes())
+}
+
+func (a Address) Unmarshal(b []byte) error {
+	return cbor.DecodeInto(b, &a)
+}
+
+func (a Address) Marshal() ([]byte, error) {
+	return cbor.DumpObject(a)
+}
+
 func newAddress(protocol Protocol, payload []byte) Address {
 	if protocol < ID || protocol > BLS {
 		panic("invalid protocol")
@@ -107,7 +145,15 @@ func NewBLSAddress(pubkey []byte) Address {
 	return newAddress(BLS, pubkey)
 }
 
-func Encode(network Network, addr Address) string {
+func NewFromString(addr string) (Address, error) {
+	return decode(addr)
+}
+
+func NewFromBytes(addr []byte) Address {
+	return Address{string(addr)}
+}
+
+func encode(network Network, addr Address) (string, error) {
 	var ntwk string
 	switch network {
 	case Mainnet:
@@ -122,24 +168,24 @@ func Encode(network Network, addr Address) string {
 	switch addr.Protocol() {
 	case SECP256K1, Actor, BLS:
 		cksm := Checksum(append([]byte{addr.Protocol()}, addr.Payload()...))
-		strAddr = ntwk + fmt.Sprintf("%d", addr.Protocol()) + AddressEncoding.EncodeToString(append(addr.Payload(), cksm[:]...))
+		strAddr = ntwk + fmt.Sprintf("%d", addr.Protocol()) + AddressEncoding.WithPadding(-1).EncodeToString(append(addr.Payload(), cksm[:]...))
 	case ID:
 		strAddr = ntwk + fmt.Sprintf("%d", addr.Protocol()) + fmt.Sprintf("%d", leb128.ToUInt64(addr.Payload()))
 	default:
-		panic("invalid protocol byte")
+		return "", errors.New("invalid protocol byte")
 	}
 	log.Debugf("encoded address: %s", strAddr)
-	return strAddr
+	return strAddr, nil
 }
 
-func Decode(a string) Address {
+func decode(a string) (Address, error) {
 	log.Debugf("decoding address: %s", a)
 	if len(a) < 3 {
-		panic("invalid address length, too short")
+		return Undef, errors.New("invalid address length, too short")
 	}
 
 	if string(a[0]) != MainnetPrefix && string(a[0]) != TestnetPrefix {
-		panic("invalid network prefix")
+		return Undef, errors.New("invalid network prefix")
 	}
 
 	var protocol Protocol
@@ -153,36 +199,36 @@ func Decode(a string) Address {
 	case 51:
 		protocol = BLS
 	default:
-		panic("invalid protocol")
+		return Undef, errors.New("invalid protocol")
 	}
 
 	raw := a[2:]
 	if Protocol(protocol) == ID {
 		id, err := strconv.ParseUint(raw, 10, 64)
 		if err != nil {
-			panic("invalid ID payload")
+			return Undef, errors.New("invalid ID payload")
 		}
-		return newAddress(protocol, leb128.FromUInt64(id))
+		return newAddress(protocol, leb128.FromUInt64(id)), nil
 	}
 
-	payloadcksm, err := AddressEncoding.DecodeString(raw)
+	payloadcksm, err := AddressEncoding.WithPadding(-1).DecodeString(raw)
 	if err != nil {
-		panic(err)
+		return Undef, err
 	}
 	payload := payloadcksm[:len(payloadcksm)-ChecksumHashLength]
 	cksm := payloadcksm[len(payloadcksm)-ChecksumHashLength:]
 
 	if protocol == SECP256K1 || protocol == Actor {
 		if len(payload) != 20 {
-			panic(fmt.Sprintf("invalid hash payload length: %d, payload: %v", len(payload), payload))
+			return Undef, errors.New(fmt.Sprintf("invalid hash payload length: %d, payload: %v", len(payload), payload))
 		}
 	}
 
 	if !ValidateChecksum(append([]byte{protocol}, payload...), cksm) {
-		panic("invalid checksum")
+		return Undef, errors.New("invalid checksum")
 	}
 
-	return newAddress(protocol, payload)
+	return newAddress(protocol, payload), nil
 }
 
 func Checksum(ingest []byte) []byte {
