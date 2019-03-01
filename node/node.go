@@ -463,7 +463,7 @@ func (node *Node) Start(ctx context.Context) error {
 
 	// Only set these up if there is a miner configured.
 	if _, err := node.miningAddress(); err == nil {
-		if err := node.PorcelainAPI.SectorBuilderSetup(ctx); err != nil {
+		if err := node.PorcelainAPI.MinerSetup(ctx); err != nil {
 			log.Errorf("setup mining failed: %v", err)
 			return err
 		}
@@ -732,7 +732,7 @@ func (node *Node) StartMining(ctx context.Context) error {
 	}
 
 	if node.PorcelainAPI.SectorBuilderIsRunning() {
-		if err := node.PorcelainAPI.SectorBuilderSetup(ctx); err != nil {
+		if err := node.PorcelainAPI.MinerSetup(ctx); err != nil {
 			return err
 		}
 	}
