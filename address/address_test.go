@@ -1,10 +1,12 @@
 package address
 
 import (
-	//"fmt"
+	"crypto/ecdsa"
 	"testing"
 
 	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
+
+	"github.com/filecoin-project/go-filecoin/crypto"
 )
 
 func TestIDAddress(t *testing.T) {
@@ -21,5 +23,13 @@ func TestIDAddress(t *testing.T) {
 func TestSecp256k1Address(t *testing.T) {
 	require := require.New(t)
 
-	addr := NewSecp256k1Address()
+	sk, err := crypto.GenerateKey()
+	require.NoError(err)
+
+	addr := NewSecp256k1Address(crypto.ECDSAPubToBytes(sk.Public().(*ecdsa.PublicKey)))
+	require.Equal(SECP256K1, addr.Protocol())
+
+	maybe := Decode(Encode(Mainnet, addr))
+	require.Equal(addr, maybe)
+
 }

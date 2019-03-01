@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"gx/ipfs/QmSKyB5faguXT4NqbrXpnRXqaVj5DhSm7x9BtzFydBY1UK/go-leb128"
 	"gx/ipfs/QmZp3eKdYQHHAneECmeK6HhiMwTPufmjC8DuuaGKv3unvx/blake2b-simd"
@@ -115,7 +116,7 @@ func Encode(network Network, addr Address) string {
 		cksm := Checksum(append([]byte{addr.Protocol()}, addr.Payload()...))
 		return ntwk + fmt.Sprintf("%d", addr.Protocol()) + base32.StdEncoding.EncodeToString(append(addr.Payload(), cksm[:]...))
 	case ID:
-		return ntwk + fmt.Sprintf("%d", addr.Protocol()) + fmt.Sprintf("%d", leb128.ToUInt64(addr.Payload()))
+		return strings.ToLower(ntwk + fmt.Sprintf("%d", addr.Protocol()) + fmt.Sprintf("%d", leb128.ToUInt64(addr.Payload())))
 	default:
 		panic("invalid protocol byte")
 	}
@@ -155,7 +156,7 @@ func Decode(a string) Address {
 
 	payload, err := base32.StdEncoding.DecodeString(raw)
 	if err != nil {
-		panic(err)
+		panic(raw[0])
 	}
 
 	if protocol == SECP256K1 || protocol == Actor {
