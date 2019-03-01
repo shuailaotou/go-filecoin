@@ -33,7 +33,7 @@ func (nm *nodeMiner) Create(ctx context.Context, fromAddr address.Address, gasPr
 		pid = nd.Host().ID()
 	}
 
-	res, err := nd.CreateMiner(ctx, fromAddr, gasPrice, gasLimit, pledge, pid, collateral)
+	res, err := nd.PorcelainAPI.MinerCreate(ctx, fromAddr, gasPrice, gasLimit, pledge, pid, collateral)
 	if err != nil {
 		return address.Address{}, errors.Wrap(err, "Could not create miner. Please consult the documentation to setup your wallet and genesis block correctly")
 	}
