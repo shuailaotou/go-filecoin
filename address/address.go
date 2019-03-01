@@ -5,17 +5,23 @@ import (
 	"encoding/base32"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"gx/ipfs/QmSKyB5faguXT4NqbrXpnRXqaVj5DhSm7x9BtzFydBY1UK/go-leb128"
 	"gx/ipfs/QmZp3eKdYQHHAneECmeK6HhiMwTPufmjC8DuuaGKv3unvx/blake2b-simd"
+	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
 )
+
+var log = logging.Logger("address")
 
 const PayloadHashLength = 20
 const ChecksumHashLength = 4
 
 var payloadHashConfig = &blake2b.Config{Size: PayloadHashLength}
 var checksumHashConfig = &blake2b.Config{Size: ChecksumHashLength}
+
+const encodeStd = "abcdefghijklmnopqrstuvwxyz234567"
+
+var AddressEncoding = base32.NewEncoding(encodeStd)
 
 /*
 
@@ -81,6 +87,7 @@ func newAddress(protocol Protocol, payload []byte) Address {
 	if c := copy(buf[1:], payload); c != len(payload) {
 		panic("copy data length is inconsistent")
 	}
+	log.Debugf("new address protocol: %x, payload: %v", protocol, payload)
 	return Address{string(buf)}
 }
 
@@ -111,18 +118,22 @@ func Encode(network Network, addr Address) string {
 		panic("invalid network byte")
 	}
 
+	var strAddr string
 	switch addr.Protocol() {
 	case SECP256K1, Actor, BLS:
 		cksm := Checksum(append([]byte{addr.Protocol()}, addr.Payload()...))
-		return ntwk + fmt.Sprintf("%d", addr.Protocol()) + base32.StdEncoding.EncodeToString(append(addr.Payload(), cksm[:]...))
+		strAddr = ntwk + fmt.Sprintf("%d", addr.Protocol()) + AddressEncoding.EncodeToString(append(addr.Payload(), cksm[:]...))
 	case ID:
-		return strings.ToLower(ntwk + fmt.Sprintf("%d", addr.Protocol()) + fmt.Sprintf("%d", leb128.ToUInt64(addr.Payload())))
+		strAddr = ntwk + fmt.Sprintf("%d", addr.Protocol()) + fmt.Sprintf("%d", leb128.ToUInt64(addr.Payload()))
 	default:
 		panic("invalid protocol byte")
 	}
+	log.Debugf("encoded address: %s", strAddr)
+	return strAddr
 }
 
 func Decode(a string) Address {
+	log.Debugf("decoding address: %s", a)
 	if len(a) < 3 {
 		panic("invalid address length, too short")
 	}
@@ -154,15 +165,21 @@ func Decode(a string) Address {
 		return newAddress(protocol, leb128.FromUInt64(id))
 	}
 
-	payload, err := base32.StdEncoding.DecodeString(raw)
+	payloadcksm, err := AddressEncoding.DecodeString(raw)
 	if err != nil {
-		panic(raw[0])
+		panic(err)
 	}
+	payload := payloadcksm[:len(payloadcksm)-ChecksumHashLength]
+	cksm := payloadcksm[len(payloadcksm)-ChecksumHashLength:]
 
 	if protocol == SECP256K1 || protocol == Actor {
 		if len(payload) != 20 {
-			panic("invalid hash payload length")
+			panic(fmt.Sprintf("invalid hash payload length: %d, payload: %v", len(payload), payload))
 		}
+	}
+
+	if !ValidateChecksum(append([]byte{protocol}, payload...), cksm) {
+		panic("invalid checksum")
 	}
 
 	return newAddress(protocol, payload)
