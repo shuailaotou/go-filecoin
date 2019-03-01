@@ -2,6 +2,7 @@ package address
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -83,5 +84,23 @@ func TestBLSAddress(t *testing.T) {
 	maybe, err := decode(str)
 	require.NoError(err)
 	require.Equal(addr, maybe)
+
+}
+
+func TestMarshalJSON(t *testing.T) {
+	require := require.New(t)
+
+	actorMsg := make([]byte, 20)
+	rand.Read(actorMsg)
+
+	addr := NewActorAddress(actorMsg)
+	require.Equal(Actor, addr.Protocol())
+
+	b, err := addr.MarshalJSON()
+	require.NoError(err)
+
+	var newAddr Address
+	newAddr.UnmarshalJSON(b)
+	require.Equal(addr, newAddr)
 
 }

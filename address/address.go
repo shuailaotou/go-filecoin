@@ -2,9 +2,11 @@ package address
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"gx/ipfs/QmSKyB5faguXT4NqbrXpnRXqaVj5DhSm7x9BtzFydBY1UK/go-leb128"
 	"gx/ipfs/QmZp3eKdYQHHAneECmeK6HhiMwTPufmjC8DuuaGKv3unvx/blake2b-simd"
@@ -112,6 +114,20 @@ func (a Address) Unmarshal(b []byte) error {
 
 func (a Address) Marshal() ([]byte, error) {
 	return cbor.DumpObject(a)
+}
+
+func (a *Address) UnmarshalJSON(b []byte) error {
+	in := strings.TrimSuffix(strings.TrimPrefix(string(b), `"`), `"`)
+	addr, err := decode(in)
+	if err != nil {
+		return err
+	}
+	*a = addr
+	return nil
+}
+
+func (a *Address) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.String())
 }
 
 func newAddress(protocol Protocol, payload []byte) Address {
