@@ -10,6 +10,7 @@ import (
 
 	cid "gx/ipfs/QmR8BauakNcBa3RbE4nbQu76PDiJgoQgz8AJdhJuiU4TAw/go-cid"
 
+	"github.com/filecoin-project/go-filecoin/address"
 	th "github.com/filecoin-project/go-filecoin/testhelpers"
 	"github.com/filecoin-project/go-filecoin/types"
 )
@@ -30,13 +31,13 @@ var TestAddresses []string
 var testKeys []string
 
 // TestMiners is a list of pregenerated miner acccounts. They are owned by the matching TestAddress.
-var TestMiners []string
+var TestMiners []address.Address
 
 type detailsStruct struct {
 	Keys   []*types.KeyInfo
 	Miners []struct {
 		Owner   int
-		Address string
+		Address address.Address
 		Power   uint64
 	}
 	GenesisCid cid.Cid `refmt:",omitempty"`

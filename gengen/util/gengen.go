@@ -251,11 +251,8 @@ func setupMiners(st state.Tree, sm vm.StorageMap, keys []*types.KeyInfo, miners 
 			return nil, err
 		}
 
-		// get miner address
-		maddr, err := address.NewFromBytes(ret[0])
-		if err != nil {
-			return nil, err
-		}
+		// TODO frrist why is ret[0] special
+		maddr := address.NewFromBytes(ret[0])
 
 		minfos = append(minfos, RenderedMinerInfo{
 			Address: maddr,

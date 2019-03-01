@@ -13,8 +13,7 @@ func TestSectorBuilderUtils(t *testing.T) {
 		t.Parallel()
 		require := require.New(t)
 
-		hash := address.Hash([]byte("satoshi"))
-		addr := address.NewMainnet(hash)
+		addr := address.NewActorAddress([]byte("satoshi"))
 
 		id := AddressToProverID(addr)
 

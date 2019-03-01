@@ -279,14 +279,9 @@ func FromValues(vals []*Value) []interface{} {
 func Deserialize(data []byte, t Type) (*Value, error) {
 	switch t {
 	case Address:
-		addr, err := address.NewFromBytes(data)
-		if err != nil {
-			return nil, err
-		}
-
 		return &Value{
 			Type: t,
-			Val:  addr,
+			Val:  address.NewFromBytes(data),
 		}, nil
 	case AttoFIL:
 		return &Value{

@@ -54,8 +54,7 @@ func NewMockSigner(kis []KeyInfo) MockSigner {
 		if !ok {
 			panic("unknown public key type")
 		}
-		addrHash := address.Hash(cu.SerializeUncompressed(pub))
-		newAddr := address.NewMainnet(addrHash)
+		newAddr := address.NewSecp256k1Address(cu.SerializeUncompressed(pub))
 		ms.Addresses = append(ms.Addresses, newAddr)
 		ms.AddrKeyInfo[newAddr] = k
 
@@ -91,7 +90,7 @@ func NewSignedMessageForTestGetter(ms MockSigner) func() *SignedMessage {
 		i++
 		msg := NewMessage(
 			ms.Addresses[0], // from needs to be an address from the signer
-			address.NewMainnet([]byte(s+"-to")),
+			address.NewActorAddress([]byte(s+"-to")),
 			0,
 			NewAttoFILFromFIL(0),
 			s,
@@ -136,8 +135,8 @@ func NewMessageForTestGetter() func() *Message {
 		s := fmt.Sprintf("msg%d", i)
 		i++
 		return NewMessage(
-			address.NewMainnet([]byte(s+"-from")),
-			address.NewMainnet([]byte(s+"-to")),
+			address.NewActorAddress([]byte(s+"-from")),
+			address.NewActorAddress([]byte(s+"-to")),
 			0,
 			nil,
 			s,

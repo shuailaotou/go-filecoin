@@ -1,7 +1,6 @@
 package mining
 
 import (
-	"bytes"
 	"container/heap"
 	"sort"
 
@@ -99,7 +98,7 @@ func (pq queueHeap) Less(i, j int) bool {
 		return delta.GreaterThan(types.ZeroAttoFIL)
 	}
 	// Secondarily order by address to give a stable ordering.
-	return bytes.Compare(pq[i][0].From[:], pq[j][0].From[:]) < 0
+	return pq[i][0].From.Equal(pq[j][0].From)
 }
 
 func (pq queueHeap) Swap(i, j int) {

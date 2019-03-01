@@ -76,10 +76,10 @@ type CreatePaymentsReturn struct {
 // CreatePayments establishes a payment channel and create multiple payments against it
 func CreatePayments(ctx context.Context, plumbing cpPlumbing, config CreatePaymentsParams) (*CreatePaymentsReturn, error) {
 	// validate
-	if config.From.Empty() {
+	if config.From.Equal(address.Undef) {
 		return nil, errors.New("From cannot be empty")
 	}
-	if config.To.Empty() {
+	if config.To.Equal(address.Undef) {
 		return nil, errors.New("To cannot be empty")
 	}
 	if config.PaymentInterval < 1 {

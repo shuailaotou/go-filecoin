@@ -1031,8 +1031,9 @@ func (node *Node) CreateMiner(ctx context.Context, accountAddr address.Address, 
 		if receipt.ExitCode != uint8(0) {
 			return vmErrors.VMExitCodeToError(receipt.ExitCode, storagemarket.Errors)
 		}
-		minerAddr, err = address.NewFromBytes(receipt.Return[0])
-		return err
+		// TODO why is retrun[0] special
+		minerAddr = address.NewFromBytes(receipt.Return[0])
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -1076,7 +1077,8 @@ func (node *Node) miningOwnerAddress(ctx context.Context, miningAddr address.Add
 		return address.Address{}, errors.Wrap(err, "failed to getOwner")
 	}
 
-	return address.NewFromBytes(res[0])
+	// TODO why is retrun[0] special
+	return address.NewFromBytes(res[0]), nil
 }
 
 // MiningSignerAddress returns the signing address for the miner actor to sign blocks and tickets

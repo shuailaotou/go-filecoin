@@ -67,9 +67,7 @@ func (smsg *SignedMessage) RecoverAddress(r Recoverer) (address.Address, error) 
 		return address.Address{}, err
 	}
 
-	maybeAddrHash := address.Hash(maybePk)
-
-	return address.NewMainnet(maybeAddrHash), nil
+	return address.NewSecp256k1Address(maybePk), nil
 
 }
 

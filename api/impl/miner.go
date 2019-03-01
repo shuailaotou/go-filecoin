@@ -79,7 +79,8 @@ func (nm *nodeMiner) GetOwner(ctx context.Context, minerAddr address.Address) (a
 		return address.Address{}, err
 	}
 
-	return address.NewFromBytes(bytes[0])
+	//TODO why special?
+	return address.NewFromBytes(bytes[0]), nil
 }
 
 func (nm *nodeMiner) GetPower(ctx context.Context, minerAddr address.Address) (*big.Int, error) {

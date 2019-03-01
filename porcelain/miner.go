@@ -111,7 +111,7 @@ func MinerSetPrice(ctx context.Context, plumbing mspAPI, from address.Address, m
 	}
 
 	// get miner address if not provided
-	if miner.Empty() {
+	if miner.Equal(address.Undef) {
 		minerValue, err := plumbing.ConfigGet("mining.minerAddress")
 		if err != nil {
 			return res, errors.Wrap(err, "Could not get miner address in config")
@@ -162,7 +162,7 @@ type mpspAPI interface {
 // This method accepts all the same arguments as MinerSetPrice.
 func MinerPreviewSetPrice(ctx context.Context, plumbing mpspAPI, from address.Address, miner address.Address, price *types.AttoFIL, expiry *big.Int) (types.GasUnits, error) {
 	// get miner address if not provided
-	if miner.Empty() {
+	if miner.Equal(address.Undef) {
 		minerValue, err := plumbing.ConfigGet("mining.minerAddress")
 		if err != nil {
 			return types.NewGasUnits(0), errors.Wrap(err, "Could not get miner address in config")
@@ -208,10 +208,11 @@ type mgoaAPI interface {
 func MinerGetOwnerAddress(ctx context.Context, plumbing mgoaAPI, minerAddr address.Address) (address.Address, error) {
 	res, _, err := plumbing.MessageQuery(ctx, address.Address{}, minerAddr, "getOwner")
 	if err != nil {
-		return address.Address{}, err
+		return address.Undef, err
 	}
 
-	return address.NewFromBytes(res[0])
+	// TODO: frrist why is res[0] special?
+	return address.NewFromBytes(res[0]), nil
 }
 
 // mgaAPI is the subset of the plumbing.API that MinerGetAsk uses.

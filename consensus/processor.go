@@ -692,9 +692,7 @@ func minerOwnerAddress(ctx context.Context, st state.Tree, vms vm.StorageMap, mi
 	if code != 0 {
 		return address.Address{}, errors.NewFaultErrorf("could not get miner owner. error code %d", code)
 	}
-	minerOwnerAddr, err := address.NewFromBytes(ret[0])
-	if err != nil {
-		return address.Address{}, errors.FaultErrorWrap(err, "miner owner return value could not be decoded as address")
-	}
+	// TODO(frrist): I have zero idea why ret[0] is significant address in CR
+	minerOwnerAddr := address.NewFromBytes(ret[0])
 	return minerOwnerAddr, nil
 }
