@@ -916,7 +916,11 @@ func (node *Node) NewAddress() (address.Address, error) {
 func (node *Node) CreateMiner(ctx context.Context, accountAddr address.Address, gasPrice types.AttoFIL, gasLimit types.GasUnits, pledge uint64, pid libp2ppeer.ID, collateral *types.AttoFIL) (_ *address.Address, err error) {
 
 	// Only create a miner if we don't already have one.
-	if _, err := node.miningAddress(); err != ErrNoMinerAddress {
+	cfgAddr, err := node.PorcelainAPI.ConfigGet("mining.minerAddress")
+	if err != nil {
+		return nil, err
+	}
+	if _, success := cfgAddr.(address.Address); !success {
 		return nil, fmt.Errorf("can only have one miner per node")
 	}
 
