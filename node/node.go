@@ -934,8 +934,8 @@ func (node *Node) CreateMiner(ctx context.Context, accountAddr address.Address, 
 	if !success {
 		return nil, fmt.Errorf("failed to read miner address")
 	}
-	if (addr != address.Address{}) && node.Wallet.HasAddress(addr) {
-		pubKey, err = node.Wallet.GetPubKeyForAddress(addr)
+	if (addr != address.Address{}) && node.PorcelainAPI.WalletHasAddress(addr) {
+		pubKey, err = node.PorcelainAPI.WalletGetPubKeyForAddress(addr)
 		if err != nil {
 			return nil, err
 		}
