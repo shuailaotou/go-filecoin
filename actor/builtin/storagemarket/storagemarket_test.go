@@ -34,8 +34,7 @@ func TestStorageMarketCreateMiner(t *testing.T) {
 	require.NoError(err)
 	require.Nil(result.ExecutionError)
 
-	outAddr, err := address.NewFromBytes(result.Receipt.Return[0])
-	require.NoError(err)
+	outAddr := address.NewFromBytes(result.Receipt.Return[0])
 	minerActor, err := st.GetActor(ctx, outAddr)
 	require.NoError(err)
 
@@ -111,15 +110,14 @@ func TestStorageMarkeCreateMinerDoesNotOverwriteActorBalance(t *testing.T) {
 	require.NoError(result.ExecutionError)
 
 	// ensure our derived address is the address storage market creates
-	createdAddress, err := address.NewFromBytes(result.Receipt.Return[0])
-	require.NoError(err)
+	createdAddress := address.NewActorAddress(result.Receipt.Return[0])
 	assert.Equal(minerAddr, createdAddress)
 
 	miner, err := st.GetActor(ctx, minerAddr)
 	require.NoError(err)
 
 	// miner balance should be sum of messages
-	assert.Equal(types.NewAttoFILFromFIL(300), miner.Balance)
+	assert.Equal(types.NewAttoFILFromFIL(300).String(), miner.Balance.String())
 }
 
 func TestStorageMarkeCreateMinerErrorsOnInvalidKey(t *testing.T) {
@@ -154,14 +152,12 @@ func deriveMinerAddress(creator address.Address, nonce uint64) (address.Address,
 	buf := new(bytes.Buffer)
 
 	if _, err := buf.Write(creator.Bytes()); err != nil {
-		return address.Address{}, err
+		return address.Undef, err
 	}
 
 	if err := binary.Write(buf, binary.BigEndian, nonce); err != nil {
-		return address.Address{}, err
+		return address.Undef, err
 	}
 
-	hash := address.Hash(buf.Bytes())
-
-	return address.NewMainnet(hash), nil
+	return address.NewActorAddress(buf.Bytes()), nil
 }

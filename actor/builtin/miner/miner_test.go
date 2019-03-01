@@ -43,9 +43,7 @@ func createTestMinerWith(pledge int64,
 	result, err := th.ApplyTestMessage(stateTree, vms, msg, types.NewBlockHeight(0))
 	assert.NoError(err)
 
-	addr, err := address.NewFromBytes(result.Receipt.Return[0])
-	assert.NoError(err)
-	return addr
+	return address.NewFromBytes(result.Receipt.Return[0])
 }
 
 func TestAskFunctions(t *testing.T) {
