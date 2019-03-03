@@ -112,6 +112,7 @@ NETWORK COMMANDS
   go-filecoin id                     - Show info about the network peers
   go-filecoin ping <peer ID>...      - Send echo request packets to p2p network members
   go-filecoin swarm                  - Interact with the swarm
+  go-filecoin dht                    - Interact with the dht
 
 ACTOR COMMANDS
   go-filecoin actor                  - Interact with actors. Actors are built-in smart contracts.
@@ -156,6 +157,7 @@ var rootSubcmdsDaemon = map[string]*cmds.Command{
 	"config":           configCmd,
 	"client":           clientCmd,
 	"dag":              dagCmd,
+	"dht":              dhtCmd,
 	"id":               idCmd,
 	"log":              logCmd,
 	"message":          msgCmd,
