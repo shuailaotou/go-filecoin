@@ -2,7 +2,6 @@ package plumbing
 
 import (
 	"context"
-	"io"
 
 	"gx/ipfs/QmR8BauakNcBa3RbE4nbQu76PDiJgoQgz8AJdhJuiU4TAw/go-cid"
 	"gx/ipfs/QmTGxDz2CjBucFzPNTiWwzQmTWdrBnzqbqrMucDYMsjuPb/go-libp2p-net"
@@ -19,8 +18,6 @@ import (
 	"github.com/filecoin-project/go-filecoin/plumbing/msg"
 	"github.com/filecoin-project/go-filecoin/plumbing/mthdsig"
 	"github.com/filecoin-project/go-filecoin/plumbing/ntwk"
-	"github.com/filecoin-project/go-filecoin/plumbing/sf"
-	"github.com/filecoin-project/go-filecoin/proofs/sectorbuilder"
 	"github.com/filecoin-project/go-filecoin/pubsub"
 	"github.com/filecoin-project/go-filecoin/types"
 	"github.com/filecoin-project/go-filecoin/wallet"
@@ -34,32 +31,30 @@ import (
 type API struct {
 	logger logging.EventLogger
 
-	chain         chain.ReadStore
-	config        *cfg.Config
-	msgPool       *core.MessagePool
-	msgPreviewer  *msg.Previewer
-	msgQueryer    *msg.Queryer
-	msgSender     *msg.Sender
-	msgWaiter     *msg.Waiter
-	network       *ntwk.Network
-	sectorForeman *sf.SectorForeman
-	sigGetter     *mthdsig.Getter
-	wallet        *wallet.Wallet
+	chain        chain.ReadStore
+	config       *cfg.Config
+	msgPool      *core.MessagePool
+	msgPreviewer *msg.Previewer
+	msgQueryer   *msg.Queryer
+	msgSender    *msg.Sender
+	msgWaiter    *msg.Waiter
+	network      *ntwk.Network
+	sigGetter    *mthdsig.Getter
+	wallet       *wallet.Wallet
 }
 
 // APIDeps contains all the API's dependencies
 type APIDeps struct {
-	Chain         chain.ReadStore
-	Config        *cfg.Config
-	MsgPool       *core.MessagePool
-	MsgPreviewer  *msg.Previewer
-	MsgQueryer    *msg.Queryer
-	MsgSender     *msg.Sender
-	MsgWaiter     *msg.Waiter
-	Network       *ntwk.Network
-	SectorForeman *sf.SectorForeman
-	SigGetter     *mthdsig.Getter
-	Wallet        *wallet.Wallet
+	Chain        chain.ReadStore
+	Config       *cfg.Config
+	MsgPool      *core.MessagePool
+	MsgPreviewer *msg.Previewer
+	MsgQueryer   *msg.Queryer
+	MsgSender    *msg.Sender
+	MsgWaiter    *msg.Waiter
+	Network      *ntwk.Network
+	SigGetter    *mthdsig.Getter
+	Wallet       *wallet.Wallet
 }
 
 // New constructs a new instance of the API.
@@ -67,17 +62,16 @@ func New(deps *APIDeps) *API {
 	return &API{
 		logger: logging.Logger("porcelain"),
 
-		chain:         deps.Chain,
-		config:        deps.Config,
-		msgPool:       deps.MsgPool,
-		msgPreviewer:  deps.MsgPreviewer,
-		msgQueryer:    deps.MsgQueryer,
-		msgSender:     deps.MsgSender,
-		msgWaiter:     deps.MsgWaiter,
-		network:       deps.Network,
-		sectorForeman: deps.SectorForeman,
-		sigGetter:     deps.SigGetter,
-		wallet:        deps.Wallet,
+		chain:        deps.Chain,
+		config:       deps.Config,
+		msgPool:      deps.MsgPool,
+		msgPreviewer: deps.MsgPreviewer,
+		msgQueryer:   deps.MsgQueryer,
+		msgSender:    deps.MsgSender,
+		msgWaiter:    deps.MsgWaiter,
+		network:      deps.Network,
+		sigGetter:    deps.SigGetter,
+		wallet:       deps.Wallet,
 	}
 }
 
@@ -192,47 +186,6 @@ func (api *API) NetworkSetStreamHandler(pid protocol.ID, handler net.StreamHandl
 // NetworkGetPeerID gets the current peer id
 func (api *API) NetworkGetPeerID() peer.ID {
 	return api.network.GetPeerID()
-}
-
-// SectorBuilderAddPiece adds a piece to the sectorbuilder
-func (api *API) SectorBuilderAddPiece(ctx context.Context, pi *sectorbuilder.PieceInfo) (sectorID uint64, err error) {
-	return api.sectorForeman.AddPiece(ctx, pi)
-}
-
-// SectorBuilderIsRunning returns a boolean representing whether the sector
-// builder is present or not
-func (api *API) SectorBuilderIsRunning() bool {
-	return api.sectorForeman.IsRunning()
-}
-
-// SectorBuilderReadPieceFromSealedSector reads a piece from a sealed sector
-func (api *API) SectorBuilderReadPieceFromSealedSector(pieceCid cid.Cid) (io.Reader, error) {
-	return api.sectorForeman.ReadPieceFromSealedSector(pieceCid)
-}
-
-// SectorBuilderSealAllStagedSectors seals all staged sectors on the sector builder
-func (api *API) SectorBuilderSealAllStagedSectors(ctx context.Context) error {
-	return api.sectorForeman.SealAllStagedSectors(ctx)
-}
-
-// SectorBuilderSectorSealResults returns results from the sector builder
-func (api *API) SectorBuilderSectorSealResults() <-chan sectorbuilder.SectorSealResult {
-	return api.sectorForeman.SectorSealResults()
-}
-
-// SectorBuilderStart starts the sector builder with a given address and sector id
-func (api *API) SectorBuilderStart(minerAddr address.Address, lastUsedSectorID uint64) error {
-	return api.sectorForeman.Start(minerAddr, lastUsedSectorID)
-}
-
-// SectorBuilderStop stops the sectorbuilder
-func (api *API) SectorBuilderStop() error {
-	return api.sectorForeman.Stop()
-}
-
-// SectorBuilderGeneratePoST generates PoSt for the sectorbuilder
-func (api *API) SectorBuilderGeneratePoST(req sectorbuilder.GeneratePoSTRequest) (sectorbuilder.GeneratePoSTResponse, error) {
-	return api.sectorForeman.GeneratePoST(req)
 }
 
 // SignBytes uses private key information associated with the given address to sign the given bytes.

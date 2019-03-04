@@ -30,6 +30,7 @@ import (
 	"github.com/filecoin-project/go-filecoin/address"
 	cbu "github.com/filecoin-project/go-filecoin/cborutil"
 	"github.com/filecoin-project/go-filecoin/exec"
+	"github.com/filecoin-project/go-filecoin/node/sectorforeman"
 	"github.com/filecoin-project/go-filecoin/proofs"
 	"github.com/filecoin-project/go-filecoin/proofs/sectorbuilder"
 	"github.com/filecoin-project/go-filecoin/repo"
@@ -71,6 +72,8 @@ type Miner struct {
 
 	proposalAcceptor func(ctx context.Context, m *Miner, p *DealProposal) (*DealResponse, error)
 	proposalRejector func(ctx context.Context, m *Miner, p *DealProposal, reason string) (*DealResponse, error)
+
+	sectorForeman *sectorforeman.SectorForeman
 }
 
 type storageDeal struct {
@@ -86,10 +89,6 @@ type minerPorcelain interface {
 	MessageSend(ctx context.Context, from, to address.Address, value *types.AttoFIL, gasPrice types.AttoFIL, gasLimit types.GasUnits, method string, params ...interface{}) (cid.Cid, error)
 	MessageQuery(ctx context.Context, optFrom, to address.Address, method string, params ...interface{}) ([][]byte, *exec.FunctionSignature, error)
 	MessageWait(ctx context.Context, msgCid cid.Cid, cb func(*types.Block, *types.SignedMessage, *types.MessageReceipt) error) error
-
-	SectorBuilderAddPiece(ctx context.Context, pi *sectorbuilder.PieceInfo) (sectorID uint64, err error)
-	SectorBuilderGeneratePoST(req sectorbuilder.GeneratePoSTRequest) (sectorbuilder.GeneratePoSTResponse, error)
-	SectorBuilderIsRunning() bool
 }
 
 // node is subset of node on which this protocol depends. These deps
@@ -117,7 +116,7 @@ func init() {
 }
 
 // NewMiner is
-func NewMiner(ctx context.Context, minerAddr, minerOwnerAddr address.Address, nd node, dealsDs repo.Datastore, porcelainAPI minerPorcelain) (*Miner, error) {
+func NewMiner(ctx context.Context, minerAddr, minerOwnerAddr address.Address, nd node, dealsDs repo.Datastore, porcelainAPI minerPorcelain, sf *sectorforeman.SectorForeman) (*Miner, error) {
 	sm := &Miner{
 		minerAddr:        minerAddr,
 		minerOwnerAddr:   minerOwnerAddr,
@@ -127,6 +126,7 @@ func NewMiner(ctx context.Context, minerAddr, minerOwnerAddr address.Address, nd
 		node:             nd,
 		proposalAcceptor: acceptProposal,
 		proposalRejector: rejectProposal,
+		sectorForeman:    sf,
 	}
 
 	if err := sm.loadDealsAwaitingSeal(); err != nil {
@@ -327,7 +327,7 @@ func (sm *Miner) getPaymentChannel(ctx context.Context, p *DealProposal) (*payme
 }
 
 func acceptProposal(ctx context.Context, sm *Miner, p *DealProposal) (*DealResponse, error) {
-	if !sm.porcelainAPI.SectorBuilderIsRunning() {
+	if !sm.sectorForeman.IsRunning() {
 		return nil, errors.New("Mining disabled, can not process proposal")
 	}
 
@@ -461,7 +461,7 @@ func (sm *Miner) processStorageDeal(c cid.Cid) {
 	//
 	// Also, this pattern of not being able to set up book-keeping ahead of
 	// the call is inelegant.
-	sectorID, err := sm.porcelainAPI.SectorBuilderAddPiece(ctx, pi)
+	sectorID, err := sm.sectorForeman.AddPiece(ctx, pi)
 	if err != nil {
 		fail("failed to submit seal proof", fmt.Sprintf("failed to add piece: %s", err))
 		return
@@ -731,7 +731,7 @@ func (sm *Miner) generatePoSt(commRs []proofs.CommR, challenge proofs.PoStChalle
 		CommRs:        commRs,
 		ChallengeSeed: challenge,
 	}
-	res, err := sm.porcelainAPI.SectorBuilderGeneratePoST(req)
+	res, err := sm.sectorForeman.GeneratePoST(req)
 	if err != nil {
 		return proofs.PoStProof{}, nil, errors.Wrap(err, "failed to generate PoSt")
 	}
