@@ -7,6 +7,7 @@ package mining
 import (
 	"context"
 	"fmt"
+	"github.com/filecoin-project/go-filecoin/wallet"
 	"time"
 
 	"gx/ipfs/QmNf3wujpV2Y7Lnj2hy2UrmuX8bhMDStRHbnSLh7Ypf36h/go-hamt-ipld"
@@ -77,11 +78,11 @@ type MessageApplier interface {
 
 // DefaultWorker runs a mining job.
 type DefaultWorker struct {
-	createPoSTFunc  DoSomeWorkFunc
-	minerAddr       address.Address
-	minerOwnerAddr  address.Address
-	blockSignerAddr address.Address
-	blockSigner     types.Signer
+	createPoSTFunc DoSomeWorkFunc
+	minerAddr      address.Address
+	minerOwnerAddr address.Address
+	minerPubKey    []byte
+	wallet         *wallet.Wallet
 
 	// consensus things
 	getStateTree GetStateTree
@@ -108,8 +109,8 @@ func NewDefaultWorker(messageSource MessageSource,
 	cst *hamt.CborIpldStore,
 	miner address.Address,
 	minerOwner address.Address,
-	blockSignerAddr address.Address,
-	blockSigner types.Signer,
+	minerPubKey []byte,
+	wallet *wallet.Wallet,
 	bt time.Duration) *DefaultWorker {
 
 	w := NewDefaultWorkerWithDeps(messageSource,
@@ -122,8 +123,8 @@ func NewDefaultWorker(messageSource MessageSource,
 		cst,
 		miner,
 		minerOwner,
-		blockSignerAddr,
-		blockSigner,
+		minerPubKey,
+		wallet,
 		bt,
 		func() {})
 
@@ -145,25 +146,25 @@ func NewDefaultWorkerWithDeps(messageSource MessageSource,
 	cst *hamt.CborIpldStore,
 	miner address.Address,
 	minerOwner address.Address,
-	blockSignerAddr address.Address,
-	blockSigner types.Signer,
+	minerPubKey []byte,
+	wallet *wallet.Wallet,
 	bt time.Duration,
 	createPoST DoSomeWorkFunc) *DefaultWorker {
 	return &DefaultWorker{
-		getStateTree:    getStateTree,
-		getWeight:       getWeight,
-		getAncestors:    getAncestors,
-		messageSource:   messageSource,
-		processor:       processor,
-		powerTable:      powerTable,
-		blockstore:      bs,
-		cstore:          cst,
-		createPoSTFunc:  createPoST,
-		minerAddr:       miner,
-		minerOwnerAddr:  minerOwner,
-		blockTime:       bt,
-		blockSignerAddr: blockSignerAddr,
-		blockSigner:     blockSigner,
+		getStateTree:   getStateTree,
+		getWeight:      getWeight,
+		getAncestors:   getAncestors,
+		messageSource:  messageSource,
+		processor:      processor,
+		powerTable:     powerTable,
+		blockstore:     bs,
+		cstore:         cst,
+		createPoSTFunc: createPoST,
+		minerAddr:      miner,
+		minerOwnerAddr: minerOwner,
+		minerPubKey:    minerPubKey,
+		blockTime:      bt,
+		wallet:         wallet,
 	}
 }
 
@@ -216,7 +217,7 @@ func (w *DefaultWorker) Mine(ctx context.Context, base types.TipSet, nullBlkCoun
 			return false
 		}
 		copy(proof[:], prChRead[:])
-		ticket = CreateTicket(proof, w.blockSignerAddr, w.blockSigner)
+		ticket = CreateTicket(proof, w.minerPubKey, w.wallet)
 	}
 
 	// TODO: Test the interplay of isWinningTicket() and createPoSTFunc()
@@ -255,20 +256,26 @@ func createProof(challengeSeed proofs.PoStChallengeSeed, createPoST DoSomeWorkFu
 	return c
 }
 
-// CreateTicket computes a valid ticket using the supplied proof
-// []byte and the minerAddress address.Address.
-//    returns:  []byte -- the ticket.
-func CreateTicket(proof proofs.PoStProof, signerAddr address.Address, signer types.Signer) []byte {
+// CreateTicket computes a valid ticket using the supplied proof  []byte and the minerAddress address.Address.
+//    returns:  []byte, error
+func CreateTicket(proof proofs.PoStProof, signerPubKey []byte, signer *wallet.Wallet) ([]byte, error) {
+
+	var ticket []byte
+
+	signerAddr, err := wallet.AddressFromPubKey(signer, signerPubKey)
+	if err != nil {
+		return ticket, err
+	}
+
 	buf := append(proof[:], signerAddr.Bytes()...)
 	h := blake2b.Sum256(buf)
-	//return h[:]
 
-	ticket, err := signer.SignBytes(h[:], signerAddr)
+	ticket, err = signer.SignBytes(h[:], signerAddr)
 	if err != nil {
 		errMsg := fmt.Sprintf("SignBytes error in CreateTicket: %s", err.Error())
-		panic(errMsg)
+		return ticket, errors.New(errMsg)
 	}
-	return ticket
+	return ticket, nil
 }
 
 // fakeCreatePoST is the default implementation of DoSomeWorkFunc.

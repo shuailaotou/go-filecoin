@@ -765,7 +765,6 @@ func (node *Node) StartMining(ctx context.Context) error {
 	}
 
 	minerOwnerAddr, err := node.miningOwnerAddress(ctx, minerAddr)
-	minerSigningAddress := node.MiningSignerAddress()
 	if err != nil {
 		return errors.Wrapf(err, "failed to get mining owner address for miner %s", minerAddr)
 	}
@@ -802,8 +801,18 @@ func (node *Node) StartMining(ctx context.Context) error {
 			return chain.GetRecentAncestors(ctx, ts, node.ChainReader, newBlockHeight, consensus.AncestorRoundsNeeded, consensus.LookBackParameter)
 		}
 		processor := consensus.NewDefaultProcessor()
+
+
+		queryer := msg.NewQueryer(node.Repo, node.Wallet, node.ChainReader, node.cborStore, node.Blockstore)
+		res, _, err := queryer.Query(ctx, minerOwnerAddr, minerAddr, "getKey")
+		if err != nil {
+			log.Errorf("could not getKey from miner actor")
+			return false
+		}
+		minerPubKey := res[0]
+
 		worker := mining.NewDefaultWorker(node.MsgPool, getState, getWeight, getAncestors, processor, node.PowerTable,
-			node.Blockstore, node.CborStore(), minerAddr, minerOwnerAddr, minerSigningAddress, node.Wallet, blockTime)
+			node.Blockstore, node.CborStore(), minerAddr, minerOwnerAddr, minerPubKey, node.Wallet, blockTime)
 		node.MiningScheduler = mining.NewScheduler(worker, mineDelay, node.ChainReader.Head)
 	}
 
@@ -989,11 +998,11 @@ func (node *Node) NewAddress() (address.Address, error) {
 }
 
 // CreateMiner creates a new miner actor for the given account and returns its address.
-// It will wait for the the actor to appear on-chain and add set the address to mining.minerAddress in the config.
+// It will wait for the the actor to appear on-chain and add the address to mining.minerAddress in the config.
 // TODO: This should live in a MinerAPI or some such. It's here until we have a proper API layer.
 // TODO: add ability to pass in a KeyInfo to store for signing blocks.
 //       See https://github.com/filecoin-project/go-filecoin/issues/1843
-func (node *Node) CreateMiner(ctx context.Context, blockSignerAddr address.Address, gasPrice types.AttoFIL, gasLimit types.GasUnits, pledge uint64, pid libp2ppeer.ID, collateral *types.AttoFIL) (_ *address.Address, err error) {
+func (node *Node) CreateMiner(ctx context.Context, minerOwnerAddr address.Address, gasPrice types.AttoFIL, gasLimit types.GasUnits, pledge uint64, pid libp2ppeer.ID, collateral *types.AttoFIL) (_ *address.Address, err error) {
 
 	// Only create a miner if we don't already have one.
 	if _, err := node.miningAddress(); err != ErrNoMinerAddress {
@@ -1005,14 +1014,14 @@ func (node *Node) CreateMiner(ctx context.Context, blockSignerAddr address.Addre
 		log.FinishWithErr(ctx, err)
 	}()
 
-	pubKey, err := node.Wallet.GetPubKeyForAddress(blockSignerAddr)
+	pubKey, err := node.Wallet.GetPubKeyForAddress(minerOwnerAddr)
 	if err != nil {
 		return nil, err
 	}
 
 	smsgCid, err := node.PorcelainAPI.MessageSendWithDefaultAddress(
 		ctx,
-		blockSignerAddr,
+		minerOwnerAddr,
 		address.StorageMarketAddress,
 		collateral,
 		gasPrice,
@@ -1039,7 +1048,7 @@ func (node *Node) CreateMiner(ctx context.Context, blockSignerAddr address.Addre
 		return nil, err
 	}
 
-	err = node.saveMinerConfig(minerAddr, blockSignerAddr)
+	err = node.saveMinerConfig(minerAddr)
 	if err != nil {
 		return &minerAddr, err
 	}
@@ -1049,12 +1058,11 @@ func (node *Node) CreateMiner(ctx context.Context, blockSignerAddr address.Addre
 	return &minerAddr, err
 }
 
-// saveMinerConfig updates the Node Mining config with the MinerAddress and the BlockSignerAddress.
-func (node *Node) saveMinerConfig(minerAddr address.Address, signerAddr address.Address) error {
+// saveMinerConfig updates the Node Mining config with the MinerAddress.
+func (node *Node) saveMinerConfig(minerAddr address.Address) error {
 	r := node.Repo
 	newConfig := r.Config()
 	newConfig.Mining.MinerAddress = minerAddr
-	newConfig.Mining.BlockSignerAddress = signerAddr
 	return r.ReplaceConfig(newConfig)
 }
 
@@ -1072,12 +1080,6 @@ func (node *Node) miningOwnerAddress(ctx context.Context, miningAddr address.Add
 	}
 
 	return address.NewFromBytes(res[0])
-}
-
-// MiningSignerAddress returns the signing address for the miner actor to sign blocks and tickets
-func (node *Node) MiningSignerAddress() address.Address {
-	r := node.Repo
-	return r.Config().Mining.BlockSignerAddress
 }
 
 // BlockHeight returns the current block height of the chain.

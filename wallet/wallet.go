@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"sync"
@@ -104,6 +105,23 @@ func (w *Wallet) SignBytes(data []byte, addr address.Address) (types.Signature, 
 		return nil, errors.Wrapf(err, "failed to sign data with address: %s", addr)
 	}
 	return backend.SignBytes(data, addr)
+}
+
+
+func AddressFromPubKey(w *Wallet, pk []byte) (address.Address, error) {
+	var addr address.Address
+
+	for addr = range w.Addresses() {
+		testPk, err := w.GetPubKeyForAddress(addr)
+		if err != nil {
+			return addr, errors.New("could not fetch public key")
+		}
+
+		if bytes.Equal(testPk, pk) {
+			return addr, nil
+		}
+	}
+	return addr, errors.New("public key not found in wallet")
 }
 
 // Verify cryptographically verifies that 'sig' is the signed hash of 'data' with
