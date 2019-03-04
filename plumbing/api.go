@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"gx/ipfs/QmR8BauakNcBa3RbE4nbQu76PDiJgoQgz8AJdhJuiU4TAw/go-cid"
-	"gx/ipfs/QmTGxDz2CjBucFzPNTiWwzQmTWdrBnzqbqrMucDYMsjuPb/go-libp2p-net"
 	"gx/ipfs/QmTu65MVbemtUxJEWgsTtzv9Zv9P8rvmqNA4eG9TrTRGYc/go-libp2p-peer"
-	"gx/ipfs/QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN/go-libp2p-protocol"
 	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
 
 	"github.com/filecoin-project/go-filecoin/actor"
@@ -176,11 +174,6 @@ func (api *API) PubSubSubscribe(topic string) (pubsub.Subscription, error) {
 // PubSubPublish publishes a message to a topic on the filecoin network
 func (api *API) PubSubPublish(topic string, data []byte) error {
 	return api.network.Publish(topic, data)
-}
-
-// NetworkSetStreamHandler sets the stream handler for the libp2p host
-func (api *API) NetworkSetStreamHandler(pid protocol.ID, handler net.StreamHandler) {
-	api.network.SetStreamHandler(pid, handler)
 }
 
 // NetworkGetPeerID gets the current peer id

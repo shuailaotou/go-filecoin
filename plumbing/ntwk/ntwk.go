@@ -1,9 +1,7 @@
 package ntwk
 
 import (
-	"gx/ipfs/QmTGxDz2CjBucFzPNTiWwzQmTWdrBnzqbqrMucDYMsjuPb/go-libp2p-net"
 	"gx/ipfs/QmTu65MVbemtUxJEWgsTtzv9Zv9P8rvmqNA4eG9TrTRGYc/go-libp2p-peer"
-	"gx/ipfs/QmZNkThpqfVXs9GNbexPrfBbXSLNYeKrE7jwFM2oqHbyqN/go-libp2p-protocol"
 	"gx/ipfs/Qmd52WKRSwrBK5gUaJKawryZQ5by6UbNB8KVW2Zy6JtbyW/go-libp2p-host"
 
 	"github.com/filecoin-project/go-filecoin/pubsub"
@@ -28,9 +26,4 @@ func New(host host.Host, publisher *pubsub.Publisher, subscriber *pubsub.Subscri
 // GetPeerID gets the current peer id from libp2p-host
 func (network *Network) GetPeerID() peer.ID {
 	return network.host.ID()
-}
-
-// SetStreamHandler sets the stream handler for the libp2p host
-func (network *Network) SetStreamHandler(pid protocol.ID, handler net.StreamHandler) {
-	network.host.SetStreamHandler(pid, handler)
 }
