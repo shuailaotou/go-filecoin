@@ -29,6 +29,7 @@ var msgCmd = &cmds.Command{
 	},
 }
 
+// MessageSendResult is the return type for message send command
 type MessageSendResult struct {
 	Cid     cid.Cid
 	GasUsed types.GasUnits

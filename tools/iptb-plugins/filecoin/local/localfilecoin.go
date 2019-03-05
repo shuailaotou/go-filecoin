@@ -415,8 +415,8 @@ func (l *Localfilecoin) Shell(ctx context.Context, ns []testbedi.Core) error {
 		return err
 	}
 
-	nenvs = filecoin.UpdateOrAppendEnv(envs, "FC_PID", fmt.Sprintf("%d", pid))
-	nenvs = filecoin.UpdateOrAppendEnv(envs, "FC_BINARY", l.binPath)
+	nenvs = filecoin.UpdateOrAppendEnv(nenvs, "FC_PID", fmt.Sprintf("%d", pid))
+	nenvs = filecoin.UpdateOrAppendEnv(nenvs, "FC_BINARY", l.binPath)
 
 	cmd := exec.CommandContext(ctx, shell)
 	cmd.Env = nenvs

@@ -1,7 +1,5 @@
 package fastutil
 
-/*
-
 import (
 	"github.com/filecoin-project/go-filecoin/tools/fast"
 	"io"
@@ -22,4 +20,3 @@ func ShellWithInterval(node *fast.Filecoin) (io.Reader, error) {
 
 	return interval, nil
 }
-*/

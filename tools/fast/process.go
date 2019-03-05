@@ -131,10 +131,12 @@ func (f *Filecoin) StopDaemon(ctx context.Context) error {
 	return f.teardownStderrCapturing()
 }
 
+// Shell starts a user shell targeting the filecoin process
 func (f *Filecoin) Shell() error {
 	return f.core.Shell(f.ctx, []testbedi.Core{})
 }
 
+// Dir returns the dirtectory used by the filecoin process
 func (f *Filecoin) Dir() string {
 	return f.core.Dir()
 }

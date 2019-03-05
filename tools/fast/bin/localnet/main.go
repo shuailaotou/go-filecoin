@@ -30,14 +30,15 @@ import (
 )
 
 var (
-	workdir   string        = ""
-	shell     bool          = false
-	count     int           = 5
-	blocktime time.Duration = 5 * time.Second
-	err       error         = nil
-	fil       int           = 100000
+	workdir   string
+	shell     bool
+	count     = 5
+	blocktime = 5 * time.Second
+	err       error
+	fil       = 100000
 	balance   big.Int
 
+	// SectorSize is the number of bytes that will be used to make power for miners
 	SectorSize int64 = 1016
 )
 
@@ -55,7 +56,7 @@ func init() {
 	// block time value.
 	series.GlobalSleepDelay = blocktime
 
-	// Set the inital balance
+	// Set the initial balance
 	balance.SetInt64(int64(100 * fil))
 }
 

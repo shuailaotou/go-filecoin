@@ -8,6 +8,8 @@ import (
 	"github.com/filecoin-project/go-filecoin/tools/fast"
 )
 
+// CreateMinerWithAsk setups a miner and sets an ask price. The created ask is
+// returned. The node will be mining as well.
 func CreateMinerWithAsk(ctx context.Context, miner *fast.Filecoin, pledge uint64, collateral *big.Int, price *big.Float, expiry *big.Int) (api.Ask, error) {
 
 	// Create miner

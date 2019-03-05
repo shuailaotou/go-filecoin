@@ -157,6 +157,7 @@ Collateral must be greater than 0.001 FIL per pledged sector.`,
 	},
 }
 
+// MinerSetPriceResult is the return type for miner set-price command
 type MinerSetPriceResult struct {
 	GasUsed               types.GasUnits
 	MinerSetPriceResponse porcelain.MinerSetPriceResponse
@@ -266,6 +267,7 @@ This command waits for the ask to be mined.`,
 	},
 }
 
+// MinerUpdatePeerIDResult is the return type for miner update-peerid command
 type MinerUpdatePeerIDResult struct {
 	Cid     cid.Cid
 	GasUsed types.GasUnits
