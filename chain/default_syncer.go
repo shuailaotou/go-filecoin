@@ -371,6 +371,7 @@ func (syncer *DefaultSyncer) HandleNewBlocks(ctx context.Context, blkCids []cid.
 			}
 		}
 		if err = syncer.syncOne(ctx, parent, ts); err != nil {
+			syncer.badTipSets.AddChain(chain[i:])
 			return err
 		}
 		parent = ts
