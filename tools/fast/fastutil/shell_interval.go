@@ -7,7 +7,7 @@ import (
 
 // ShellWithInterval starts a shell and returns all logs produced
 func ShellWithInterval(node *fast.Filecoin) (io.Reader, error) {
-	interval, err = node.StartLogCapture()
+	interval, err := node.StartLogCapture()
 	if err != nil {
 		return nil, err
 	}
