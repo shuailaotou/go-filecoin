@@ -22,7 +22,7 @@ const (
 // A few simple modifications have been adapted for filecoin.
 var dhtCmd = &cmds.Command{
 	Helptext: cmdkit.HelpText{
-		Tagline:          "Issue commands directly through the DHT.",
+		Tagline:          "Explore and manipulate the libp2p DHT.",
 		ShortDescription: ``,
 	},
 
@@ -33,15 +33,15 @@ var dhtCmd = &cmds.Command{
 
 var findProvidersDhtCmd = &cmds.Command{
 	Helptext: cmdkit.HelpText{
-		Tagline:          "Find peers that can provide a specific value, given a key.",
-		ShortDescription: "Outputs a list of newline-delimited provider Peer IDs.",
+		Tagline:          "Find peers that can provide a given key's value.",
+		ShortDescription: "Outputs a list of newline-delimited provider Peer IDs for a given key.",
 	},
 	Arguments: []cmdkit.Argument{
-		cmdkit.StringArg("key", true, false, "The key to send provide records for.").EnableStdin(),
+		cmdkit.StringArg("key", true, false, "The key whose provider Peer IDs are output.").EnableStdin(),
 	},
 	Options: []cmdkit.Option{
 		cmdkit.BoolOption(dhtVerboseOptionName, "v", "Print extra information."),
-		cmdkit.IntOption(numProvidersOptionName, "n", "The number of providers to find.").WithDefault(20),
+		cmdkit.IntOption(numProvidersOptionName, "n", "The max number of providers to find.").WithDefault(20),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
 		numProviders, _ := req.Options[numProvidersOptionName].(int)
@@ -54,15 +54,21 @@ var findProvidersDhtCmd = &cmds.Command{
 			return err
 		}
 
-		ctx, cancel := context.WithCancel(req.Context)
+		ctx, cancel := context.WithTimeout(req.Context, time.Minute)
 		ctx, events := notif.RegisterForQueryEvents(ctx)
 
-		pchan := GetPorcelainAPI(env).RouterFindProvidersAsync(ctx, c, numProviders)
+		pchan := GetPorcelainAPI(env).NetworkFindProvidersAsync(ctx, c, numProviders)
 
 		go func() {
 			defer cancel()
 			for p := range pchan {
 				np := p
+				// Note that the peer IDs in these Provider
+				// events are the main output of this command.
+				// These results are piped back into the event
+				// system so that they can be read alongside
+				// other routing events which are output in
+				// verbose mode but otherwise filtered.
 				notif.PublishQueryEvent(ctx, &notif.QueryEvent{
 					Type:      notif.Provider,
 					Responses: []*pstore.PeerInfo{&np},

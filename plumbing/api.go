@@ -182,8 +182,8 @@ func (api *API) NetworkGetPeerID() peer.ID {
 	return api.network.GetPeerID()
 }
 
-// RouterFindProvidersAsync issues a findProviders query to the router.
-func (api *API) RouterFindProvidersAsync(ctx context.Context, key cid.Cid, count int) <-chan pstore.PeerInfo {
+// NetworkFindProvidersAsync issues a findProviders query to the filecoin network content router.
+func (api *API) NetworkFindProvidersAsync(ctx context.Context, key cid.Cid, count int) <-chan pstore.PeerInfo {
 	return api.network.FindProvidersAsync(ctx, key, count)
 }
 
