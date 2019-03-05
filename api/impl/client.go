@@ -2,7 +2,6 @@ package impl
 
 import (
 	"context"
-	"github.com/filecoin-project/go-filecoin/protocol/storage/storagedeal"
 	"io"
 	"math/big"
 
@@ -22,6 +21,7 @@ import (
 	"github.com/filecoin-project/go-filecoin/actor/builtin/paymentbroker"
 	"github.com/filecoin-project/go-filecoin/address"
 	mapi "github.com/filecoin-project/go-filecoin/api"
+	"github.com/filecoin-project/go-filecoin/protocol/storage/storagedeal"
 	"github.com/filecoin-project/go-filecoin/types"
 )
 

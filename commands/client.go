@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"github.com/filecoin-project/go-filecoin/protocol/storage/storagedeal"
 	"io"
 	"strconv"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/filecoin-project/go-filecoin/actor/builtin/paymentbroker"
 	"github.com/filecoin-project/go-filecoin/address"
 	"github.com/filecoin-project/go-filecoin/api"
+	"github.com/filecoin-project/go-filecoin/protocol/storage/storagedeal"
 )
 
 var clientCmd = &cmds.Command{
