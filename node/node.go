@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/filecoin-project/go-filecoin/plumbing/strgdls"
 	"math/big"
 	"os"
 	"sync"
@@ -244,7 +245,7 @@ type blankValidator struct{}
 func (blankValidator) Validate(_ string, _ []byte) error        { return nil }
 func (blankValidator) Select(_ string, _ [][]byte) (int, error) { return 0, nil }
 
-// readGenesisCid is a helper function that queries the provided datastore forr
+// readGenesisCid is a helper function that queries the provided datastore for
 // an entry with the genesisKey cid, returning if found.
 func readGenesisCid(ds datastore.Datastore) (cid.Cid, error) {
 	bb, err := ds.Get(chain.GenesisKey)
@@ -412,6 +413,7 @@ func (nc *Config) Build(ctx context.Context) (*Node, error) {
 		Network:      ntwk.New(peerHost, pubsub.NewPublisher(fsub), pubsub.NewSubscriber(fsub)),
 		SigGetter:    mthdsig.NewGetter(chainReader),
 		Wallet:       fcWallet,
+		Deals:        strgdls.New(nc.Repo.DealsDatastore()),
 	}))
 
 	nd := &Node{
@@ -489,7 +491,7 @@ func (node *Node) Start(ctx context.Context) error {
 
 	cni := storage.NewClientNodeImpl(dag.NewDAGService(node.BlockService()), node.Host(), node.GetBlockTime())
 	var err error
-	node.StorageMinerClient, err = storage.NewClient(cni, node.PorcelainAPI, node.Repo.DealsDatastore())
+	node.StorageMinerClient, err = storage.NewClient(cni, node.PorcelainAPI)
 	if err != nil {
 		return errors.Wrap(err, "Could not make new storage client")
 	}
@@ -960,7 +962,7 @@ func initStorageMinerForNode(ctx context.Context, node *Node) (*storage.Miner, e
 		return nil, errors.Wrap(err, "no mining owner available, skipping storage miner setup")
 	}
 
-	miner, err := storage.NewMiner(ctx, minerAddr, miningOwnerAddr, node, node.Repo.DealsDatastore(), node.PorcelainAPI)
+	miner, err := storage.NewMiner(minerAddr, miningOwnerAddr, node, node.Repo.DealsDatastore(), node.PorcelainAPI)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate storage miner")
 	}
