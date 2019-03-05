@@ -16,8 +16,8 @@ import (
 	logging "gx/ipfs/QmbkT7eMTyXfpeyB3ZMxxcxg7XH8t6uXp49jqzz4HB7BGF/go-log"
 
 	"github.com/filecoin-project/go-filecoin/address"
+	"github.com/filecoin-project/go-filecoin/api/impl"
 	"github.com/filecoin-project/go-filecoin/gengen/util"
-	"github.com/filecoin-project/go-filecoin/types"
 
 	iptb "github.com/ipfs/iptb/testbed"
 )
@@ -27,7 +27,7 @@ import (
 // functional tests!
 type EnvironmentMemoryGenesis struct {
 	genesisCar        []byte
-	genesisMinerOwner *types.KeyInfo
+	genesisMinerOwner impl.WalletSerializeResult
 	genesisMinerAddr  address.Address
 
 	location string
@@ -237,7 +237,7 @@ func (e *EnvironmentMemoryGenesis) buildGenesis(funds *big.Int) error {
 	}
 
 	e.genesisCar = genbuffer.Bytes()
-	e.genesisMinerOwner = info.Keys[0]
+	e.genesisMinerOwner = impl.WalletSerializeResult{KeyInfo: info.Keys}
 	e.genesisMinerAddr = info.Miners[0].Address
 
 	return nil
