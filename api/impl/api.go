@@ -21,7 +21,6 @@ type nodeAPI struct {
 	log             *nodeLog
 	miner           *nodeMiner
 	mining          *nodeMining
-	paych           *nodePaych
 	ping            *nodePing
 	retrievalClient *nodeRetrievalClient
 	swarm           *nodeSwarm
@@ -51,7 +50,6 @@ func New(node *node.Node) api.API {
 	api.log = newNodeLog(api)
 	api.miner = newNodeMiner(api, porcelainAPI)
 	api.mining = newNodeMining(api)
-	api.paych = newNodePaych(api, porcelainAPI)
 	api.ping = newNodePing(api)
 	api.retrievalClient = newNodeRetrievalClient(api)
 	api.swarm = newNodeSwarm(api)
@@ -94,10 +92,6 @@ func (api *nodeAPI) Miner() api.Miner {
 
 func (api *nodeAPI) Mining() api.Mining {
 	return api.mining
-}
-
-func (api *nodeAPI) Paych() api.Paych {
-	return api.paych
 }
 
 func (api *nodeAPI) Ping() api.Ping {
