@@ -66,8 +66,6 @@ func (l *Localfilecoin) env() ([]string, error) {
 	envs = filecoin.UpdateOrAppendEnv(envs, "GO_FILECOIN_LOG_LEVEL", l.logLevel)
 	envs = filecoin.UpdateOrAppendEnv(envs, "GO_FILECOIN_LOG_JSON", l.logJSON)
 	envs = filecoin.UpdateOrAppendEnv(envs, "PATH", newPath)
-	envs = filecoin.UpdateOrAppendEnv(envs, "FC_PID", fmt.Sprintf("%d", pid))
-	envs = filecoin.UpdateOrAppendEnv(envs, "FC_BINARY", l.binPath)
 	os.Setenv("PATH", newPath)
 
 	return envs, nil

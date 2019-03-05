@@ -415,10 +415,10 @@ func (l *Localfilecoin) Shell(ctx context.Context, ns []testbedi.Core) error {
 		return err
 	}
 
-	nenvs = append(nenvs, fmt.Sprintf("FIL_PID=%d", pid))
-	nenvs = append(nenvs, fmt.Sprintf("FIL_BINARY=%d", l.binPath))
+	nenvs = filecoin.UpdateOrAppendEnv(envs, "FC_PID", fmt.Sprintf("%d", pid))
+	nenvs = filecoin.UpdateOrAppendEnv(envs, "FC_BINARY", l.binPath)
 
-	cmd := exec.CommandContext(ctx, shell) //, "-c", fmt.Sprintf("dlv attach %d %s", pid, l.binPath))
+	cmd := exec.CommandContext(ctx, shell)
 	cmd.Env = nenvs
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
