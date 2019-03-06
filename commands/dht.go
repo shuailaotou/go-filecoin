@@ -117,6 +117,12 @@ var findProvidersDhtCmd = &cmds.Command{
 type printFunc func(obj *notif.QueryEvent, out io.Writer, verbose bool)
 type pfuncMap map[notif.QueryEventType]printFunc
 
+// printEvent writes a libp2p event to a user friendly output on the out writer.
+// Note that this function is only needed to enable the output logging of
+// events that only show up during a "verbose" run. If we choose to eliminate
+// the verbose option this can be removed. However if we keep the verbose option
+// in findprovs and on any other dht subcommands we decide to copy over from
+// ipfs this function will stay needed.
 func printEvent(obj *notif.QueryEvent, out io.Writer, verbose bool, override pfuncMap) {
 	if verbose {
 		fmt.Fprintf(out, "%s: ", time.Now().Format("15:04:05.000")) // nolint: errcheck
