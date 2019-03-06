@@ -6,8 +6,6 @@ package mining
 
 import (
 	"context"
-	"fmt"
-	"github.com/filecoin-project/go-filecoin/wallet"
 	"time"
 
 	"gx/ipfs/QmNf3wujpV2Y7Lnj2hy2UrmuX8bhMDStRHbnSLh7Ypf36h/go-hamt-ipld"
@@ -22,7 +20,6 @@ import (
 	"github.com/filecoin-project/go-filecoin/state"
 	"github.com/filecoin-project/go-filecoin/types"
 	"github.com/filecoin-project/go-filecoin/vm"
-	"github.com/minio/blake2b-simd"
 )
 
 var log = logging.Logger("mining")
@@ -48,6 +45,11 @@ func NewOutput(b *types.Block, e error) Output {
 // scheduled.
 type Worker interface {
 	Mine(runCtx context.Context, base types.TipSet, nullBlkCount int, outCh chan<- Output) bool
+}
+
+// WorkerSigner is the interface used for signing blocks and tickets.
+type WorkerSigner interface {
+	CreateTicket(proof proofs.PoStProof, signerPubKey []byte) (types.Signature, error)
 }
 
 // GetStateTree is a function that gets the aggregate state tree of a TipSet. It's
@@ -82,7 +84,7 @@ type DefaultWorker struct {
 	minerAddr      address.Address
 	minerOwnerAddr address.Address
 	minerPubKey    []byte
-	wallet         *wallet.Wallet
+	workerSigner   WorkerSigner
 
 	// consensus things
 	getStateTree GetStateTree
@@ -110,7 +112,7 @@ func NewDefaultWorker(messageSource MessageSource,
 	miner address.Address,
 	minerOwner address.Address,
 	minerPubKey []byte,
-	wallet *wallet.Wallet,
+	workerSigner WorkerSigner,
 	bt time.Duration) *DefaultWorker {
 
 	w := NewDefaultWorkerWithDeps(messageSource,
@@ -124,7 +126,7 @@ func NewDefaultWorker(messageSource MessageSource,
 		miner,
 		minerOwner,
 		minerPubKey,
-		wallet,
+		workerSigner,
 		bt,
 		func() {})
 
@@ -147,7 +149,7 @@ func NewDefaultWorkerWithDeps(messageSource MessageSource,
 	miner address.Address,
 	minerOwner address.Address,
 	minerPubKey []byte,
-	wallet *wallet.Wallet,
+	workerSigner WorkerSigner,
 	bt time.Duration,
 	createPoST DoSomeWorkFunc) *DefaultWorker {
 	return &DefaultWorker{
@@ -164,7 +166,7 @@ func NewDefaultWorkerWithDeps(messageSource MessageSource,
 		minerOwnerAddr: minerOwner,
 		minerPubKey:    minerPubKey,
 		blockTime:      bt,
-		wallet:         wallet,
+		workerSigner:   workerSigner,
 	}
 }
 
@@ -217,7 +219,12 @@ func (w *DefaultWorker) Mine(ctx context.Context, base types.TipSet, nullBlkCoun
 			return false
 		}
 		copy(proof[:], prChRead[:])
-		ticket = CreateTicket(proof, w.minerPubKey, w.wallet)
+		signer := w.workerSigner
+		ticket, err = signer.CreateTicket(proof, w.minerPubKey)
+		if err != nil {
+			log.Errorf("Problem creating ticket: %s, minerOwner: %s", err.Error(), w.minerOwnerAddr)
+			return false
+		}
 	}
 
 	// TODO: Test the interplay of isWinningTicket() and createPoSTFunc()
@@ -254,28 +261,6 @@ func createProof(challengeSeed proofs.PoStChallengeSeed, createPoST DoSomeWorkFu
 		c <- challengeSeed
 	}()
 	return c
-}
-
-// CreateTicket computes a valid ticket using the supplied proof  []byte and the minerAddress address.Address.
-//    returns:  []byte, error
-func CreateTicket(proof proofs.PoStProof, signerPubKey []byte, signer *wallet.Wallet) ([]byte, error) {
-
-	var ticket []byte
-
-	signerAddr, err := wallet.AddressFromPubKey(signer, signerPubKey)
-	if err != nil {
-		return ticket, err
-	}
-
-	buf := append(proof[:], signerAddr.Bytes()...)
-	h := blake2b.Sum256(buf)
-
-	ticket, err = signer.SignBytes(h[:], signerAddr)
-	if err != nil {
-		errMsg := fmt.Sprintf("SignBytes error in CreateTicket: %s", err.Error())
-		return ticket, errors.New(errMsg)
-	}
-	return ticket, nil
 }
 
 // fakeCreatePoST is the default implementation of DoSomeWorkFunc.

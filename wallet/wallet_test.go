@@ -164,12 +164,15 @@ func TestAddressFromPubKey(t *testing.T) {
 	assert.NoError(err)
 	w := New(fs)
 
-	for _ = range []int{0,1,2} {
+	for range []int{0, 1, 2} {
 		ki, err := w.NewKeyInfo()
+		if err != nil {
+			panic("w.NewKeyInfo failed for this wallet")
+		}
 
-		expectedAddr ,_ := ki.Address()
-		pubkey ,_ := ki.PublicKey()
-		actualAddr, err := AddressFromPubKey(w,pubkey)
+		expectedAddr, _ := ki.Address()
+		pubkey := ki.PublicKey()
+		actualAddr, err := w.AddressFromPubKey(pubkey)
 		assert.NoError(err)
 		assert.Equal(expectedAddr, actualAddr)
 	}

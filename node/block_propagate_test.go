@@ -3,7 +3,6 @@ package node
 import (
 	"context"
 	"github.com/filecoin-project/go-filecoin/address"
-	"github.com/filecoin-project/go-filecoin/mining"
 	"github.com/filecoin-project/go-filecoin/state"
 	"github.com/filecoin-project/go-filecoin/testhelpers"
 	"testing"
@@ -46,6 +45,9 @@ func startNodes(t *testing.T, nds []*Node) {
 
 func TestBlockPropsManyNodes(t *testing.T) {
 	t.Parallel()
+
+	require := require.New(t)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	assert := assert.New(t)
@@ -53,10 +55,10 @@ func TestBlockPropsManyNodes(t *testing.T) {
 	numNodes := 4
 	minerAddr, nodes := makeNodes(ctx, t, assert, numNodes)
 
+	// Now add 10 null blocks and 1 tipset.
 	signer, ki := types.NewMockSignersAndKeyInfo(1)
+	mockSignerPubKey := ki[0].PublicKey()
 
-	signerAddr, err := ki[0].Address()
-	require.NoError(t, err)
 	startNodes(t, nodes)
 	defer stopNodes(nodes)
 
@@ -70,6 +72,9 @@ func TestBlockPropsManyNodes(t *testing.T) {
 	require.NotNil(t, baseTS)
 	proof := testhelpers.MakeRandomPoSTProofForTest()
 
+	ticket, err := signer.CreateTicket(proof, mockSignerPubKey)
+	require.NoError(err)
+
 	nextBlk := &types.Block{
 		Miner:        minerAddr,
 		Parents:      baseTS.ToSortedCidSet(),
@@ -77,7 +82,7 @@ func TestBlockPropsManyNodes(t *testing.T) {
 		ParentWeight: types.Uint64(10000),
 		StateRoot:    baseTS.ToSlice()[0].StateRoot,
 		Proof:        proof,
-		Ticket:       mining.CreateTicket(proof, signerAddr, signer),
+		Ticket:       ticket,
 	}
 
 	// Wait for network connection notifications to propagate
@@ -113,13 +118,12 @@ func TestChainSync(t *testing.T) {
 	baseTS := nodes[0].ChainReader.Head()
 
 	signer, ki := types.NewMockSignersAndKeyInfo(1)
-	signerAddr, err := ki[0].Address()
-	require.NoError(t, err)
+	mockSignerPubKey := ki[0].PublicKey()
 	stateRoot := baseTS.ToSlice()[0].StateRoot
 
-	nextBlk1 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 1, minerAddr, signerAddr, signer)
-	nextBlk2 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 2, minerAddr, signerAddr, signer)
-	nextBlk3 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 3, minerAddr, signerAddr, signer)
+	nextBlk1 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 1, minerAddr, mockSignerPubKey, signer)
+	nextBlk2 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 2, minerAddr, mockSignerPubKey, signer)
+	nextBlk3 := testhelpers.NewValidTestBlockFromTipSet(baseTS, stateRoot, 3, minerAddr, mockSignerPubKey, signer)
 
 	assert.NoError(nodes[0].AddNewBlock(ctx, nextBlk1))
 	assert.NoError(nodes[0].AddNewBlock(ctx, nextBlk2))

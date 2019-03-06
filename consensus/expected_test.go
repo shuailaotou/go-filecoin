@@ -101,30 +101,29 @@ func requireMakeBlocks(ctx context.Context, require *require.Assertions, pTipSet
 
 	// iterate over the keypairs and set up owner actors and miner actors with their own addresses
 	// and add them to the state tree
-	ownerAddrs := make([]address.Address, 3)
+	ownerPubKeys := make([][]byte, 3)
 	minerAddrs := make([]address.Address, 3)
 	for i, name := range kis {
 		addr, err := kis[i].Address()
 		require.NoError(err)
-		ownerAddrs[i] = addr
 
-		ownerPubKey, err := kis[i].PublicKey()
-		require.NoError(err)
+		ownerPubKeys[i] = kis[i].PublicKey()
+
 		ownerActor := testhelpers.RequireNewAccountActor(require, types.NewZeroAttoFIL())
-		require.NoError(tree.SetActor(ctx, ownerAddrs[i], ownerActor))
+		require.NoError(tree.SetActor(ctx, addr, ownerActor))
 
 		minerAddrs[i] = address.MakeTestAddress(fmt.Sprintf("%s%s", name, "Miner"))
-		minerActor := testhelpers.RequireNewMinerActor(require, vms, minerAddrs[i], ownerAddrs[i],
-			ownerPubKey, 10000, testhelpers.RequireRandomPeerID(), types.NewZeroAttoFIL())
+		minerActor := testhelpers.RequireNewMinerActor(require, vms, minerAddrs[i], addr,
+			ownerPubKeys[i], 10000, testhelpers.RequireRandomPeerID(), types.NewZeroAttoFIL())
 		require.NoError(tree.SetActor(ctx, minerAddrs[i], minerActor))
 	}
 	stateRoot, err := tree.Flush(ctx)
 	require.NoError(err)
 
 	blocks := []*types.Block{
-		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[0], ownerAddrs[0], mockSigner),
-		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[1], ownerAddrs[1], mockSigner),
-		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[2], ownerAddrs[2], mockSigner),
+		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[0], ownerPubKeys[0], mockSigner),
+		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[1], ownerPubKeys[1], mockSigner),
+		testhelpers.NewValidTestBlockFromTipSet(pTipSet, stateRoot, 1, minerAddrs[2], ownerPubKeys[2], mockSigner),
 	}
 	return blocks
 }

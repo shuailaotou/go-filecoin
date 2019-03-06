@@ -29,7 +29,7 @@ func requireSchemaConformance(t *testing.T, jsonBytes []byte, schemaName string)
 func makeTestDaemonWithMinerAndStart(t *testing.T) *th.TestDaemon {
 	daemon := th.NewDaemon(
 		t,
-		th.DefaultAddress(fixtures.TestAddresses[0]),
+		//th.DefaultAddress(fixtures.TestAddresses[0]),
 		th.WithMiner(fixtures.TestMiners[0]),
 		th.KeyFile(fixtures.KeyFilePaths()[0]),
 	).Start()

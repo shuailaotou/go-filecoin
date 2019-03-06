@@ -117,7 +117,6 @@ func (cs *ChainSeed) GiveMiner(t *testing.T, nd *Node, which int) (address.Addre
 	require.NoError(t, err)
 
 	cfg.Mining.MinerAddress = m.Address
-	cfg.Mining.BlockSignerAddress = ownerAddr
 	require.NoError(t, nd.Repo.ReplaceConfig(cfg))
 
 	return m.Address, ownerAddr

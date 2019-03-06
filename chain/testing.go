@@ -27,8 +27,13 @@ type FakeChildParams struct {
 	NullBlockCount uint64
 	Parent         types.TipSet
 	StateRoot      cid.Cid
-	Signer         types.Signer
-	SignerAddr     address.Address
+	Signer         ConsensusTestSigner
+	MinerPubKey    []byte
+}
+
+// ConsensusTestSigner is an interface for a Test signer that can create tickets.
+type ConsensusTestSigner interface {
+	CreateTicket(proof proofs.PoStProof, signerPubKey []byte) (types.Signature, error)
 }
 
 // MkFakeChild creates a mock child block of a genesis block. If a
@@ -72,7 +77,7 @@ func MkFakeChildWithCon(params FakeChildParams) (*types.Block, error) {
 		params.Nonce,
 		params.NullBlockCount,
 		params.MinerAddr,
-		params.SignerAddr,
+		params.MinerPubKey,
 		params.Signer,
 		wFun)
 }
@@ -83,8 +88,9 @@ func MkFakeChildCore(parent types.TipSet,
 	stateRoot cid.Cid,
 	nonce uint64,
 	nullBlockCount uint64,
-	minerAddr, signerAddr address.Address,
-	signer types.Signer,
+	minerAddr address.Address,
+	minerPubKey []byte,
+	signer mining.WorkerSigner,
 	wFun func(types.TipSet) (uint64, error)) (*types.Block, error) {
 	// State can be nil because it is assumed consensus uses a
 	// power table view that does not access the state.
@@ -102,7 +108,7 @@ func MkFakeChildCore(parent types.TipSet,
 
 	pIDs := parent.ToSortedCidSet()
 
-	newBlock := th.NewValidTestBlockFromTipSet(parent, stateRoot, height, minerAddr, signerAddr, signer)
+	newBlock := th.NewValidTestBlockFromTipSet(parent, stateRoot, height, minerAddr, minerPubKey, signer)
 
 	// Override fake values with our values
 	newBlock.Parents = pIDs
@@ -153,7 +159,7 @@ func RequireMkFakeChildCore(require *require.Assertions,
 		params.Nonce,
 		params.NullBlockCount,
 		params.MinerAddr,
-		params.SignerAddr,
+		params.MinerPubKey,
 		params.Signer,
 		wFun)
 	require.NoError(err)
@@ -177,9 +183,7 @@ func RequirePutTsas(ctx context.Context, require *require.Assertions, chain Stor
 }
 
 // MakeProofAndWinningTicket generates a proof and ticket that will pass validateMining.
-func MakeProofAndWinningTicket(signerAddr address.Address, minerPower uint64,
-	totalPower uint64, signer types.Signer,
-) (proofs.PoStProof, types.Signature, error) {
+func MakeProofAndWinningTicket(signerPubKey []byte, minerPower uint64, totalPower uint64, signer ConsensusTestSigner) (proofs.PoStProof, types.Signature, error) {
 
 	var postProof proofs.PoStProof
 	var ticket types.Signature
@@ -190,7 +194,7 @@ func MakeProofAndWinningTicket(signerAddr address.Address, minerPower uint64,
 
 	for {
 		postProof = th.MakeRandomPoSTProofForTest()
-		ticket = mining.CreateTicket(postProof, signerAddr, signer)
+		ticket, _ = signer.CreateTicket(postProof, signerPubKey)
 		if consensus.CompareTicketPower(ticket, minerPower, totalPower) {
 			return postProof, ticket, nil
 		}

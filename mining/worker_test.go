@@ -31,7 +31,8 @@ func Test_Mine(t *testing.T) {
 	var doSomeWorkCalled = false
 	CreatePoSTFunc := func() { doSomeWorkCalled = true }
 
-	mockSigner, blockSignerAddr := setupSigner()
+	mockSignerVal, blockSignerAddr := setupSigner()
+	mockSigner := &mockSignerVal
 
 	newCid := types.NewCidForTestGetter()
 	stateRoot := newCid()
@@ -39,7 +40,7 @@ func Test_Mine(t *testing.T) {
 	tipSet := th.RequireNewTipSet(require, baseBlock)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	st, pool, addrs, cst, bs := sharedSetup(t, mockSigner)
+	st, pool, addrs, cst, bs := sharedSetup(t, mockSignerVal)
 	getStateTree := func(c context.Context, ts types.TipSet) (state.Tree, error) {
 		return st, nil
 	}
@@ -49,43 +50,51 @@ func Test_Mine(t *testing.T) {
 
 	minerAddr := addrs[4]
 	minerOwnerAddr := addrs[3]
-
-	// Success case.
-	// TODO: this case isn't testing much.  Testing w.Mine further needs a lot more attention.
-	worker := mining.NewDefaultWorkerWithDeps(pool, getStateTree, getWeightTest, getAncestors, th.NewTestProcessor(),
-		mining.NewTestPowerTableView(1), bs, cst, minerAddr, minerOwnerAddr, blockSignerAddr, mockSigner, th.BlockTimeTest,
-		CreatePoSTFunc)
-
 	outCh := make(chan mining.Output)
-	go worker.Mine(ctx, tipSet, 0, outCh)
-	r := <-outCh
-	assert.NoError(r.Err)
-	assert.True(doSomeWorkCalled)
-	cancel()
-	// Block generation fails.
-	ctx, cancel = context.WithCancel(context.Background())
-	worker = mining.NewDefaultWorkerWithDeps(pool, makeExplodingGetStateTree(st), getWeightTest, getAncestors, th.NewTestProcessor(),
-		mining.NewTestPowerTableView(1), bs, cst, minerAddr, minerOwnerAddr, blockSignerAddr, mockSigner, th.BlockTimeTest, CreatePoSTFunc)
-	outCh = make(chan mining.Output)
-	doSomeWorkCalled = false
-	go worker.Mine(ctx, tipSet, 0, outCh)
-	r = <-outCh
-	assert.Error(r.Err)
-	assert.True(doSomeWorkCalled)
-	cancel()
 
-	// Sent empty tipset
-	ctx, cancel = context.WithCancel(context.Background())
-	worker = mining.NewDefaultWorkerWithDeps(pool, getStateTree, getWeightTest, getAncestors, th.NewTestProcessor(),
-		mining.NewTestPowerTableView(1), bs, cst, minerAddr, minerOwnerAddr, blockSignerAddr, mockSigner, th.BlockTimeTest, CreatePoSTFunc)
-	outCh = make(chan mining.Output)
-	doSomeWorkCalled = false
-	input := types.TipSet{}
-	go worker.Mine(ctx, input, 0, outCh)
-	r = <-outCh
-	assert.Error(r.Err)
-	assert.False(doSomeWorkCalled)
-	cancel()
+	// TODO: this case isn't testing much.  Testing w.Mine further needs a lot more attention.
+	t.Run("Trivial success case", func(t *testing.T) {
+		t.Parallel()
+		worker := mining.NewDefaultWorkerWithDeps(
+			pool, getStateTree, getWeightTest, getAncestors, th.NewTestProcessor(), mining.NewTestPowerTableView(1),
+			bs, cst, minerAddr, minerOwnerAddr, blockSignerAddr, mockSigner, th.BlockTimeTest,
+			CreatePoSTFunc)
+
+		go worker.Mine(ctx, tipSet, 0, outCh)
+		r := <-outCh
+		assert.NoError(r.Err)
+		assert.True(doSomeWorkCalled)
+		cancel()
+	})
+	t.Run("Block generation fails", func(t *testing.T) {
+		t.Parallel()
+		ctx, cancel = context.WithCancel(context.Background())
+		worker := mining.NewDefaultWorkerWithDeps(pool, makeExplodingGetStateTree(st), getWeightTest, getAncestors, th.NewTestProcessor(),
+			mining.NewTestPowerTableView(1), bs, cst, minerAddr, minerOwnerAddr, blockSignerAddr, mockSigner, th.BlockTimeTest, CreatePoSTFunc)
+		outCh = make(chan mining.Output)
+		doSomeWorkCalled = false
+		go worker.Mine(ctx, tipSet, 0, outCh)
+		r := <-outCh
+		assert.Error(r.Err)
+		assert.True(doSomeWorkCalled)
+		cancel()
+
+	})
+
+	t.Run("Sent empty tipset", func(t *testing.T) {
+		t.Parallel()
+		ctx, cancel = context.WithCancel(context.Background())
+		worker := mining.NewDefaultWorkerWithDeps(pool, getStateTree, getWeightTest, getAncestors, th.NewTestProcessor(),
+			mining.NewTestPowerTableView(1), bs, cst, minerAddr, minerOwnerAddr, blockSignerAddr, mockSigner, th.BlockTimeTest, CreatePoSTFunc)
+		outCh = make(chan mining.Output)
+		doSomeWorkCalled = false
+		input := types.TipSet{}
+		go worker.Mine(ctx, input, 0, outCh)
+		r := <-outCh
+		assert.Error(r.Err)
+		assert.False(doSomeWorkCalled)
+		cancel()
+	})
 }
 
 func TestGenerate(t *testing.T) {
@@ -458,9 +467,9 @@ func makeExplodingGetStateTree(st state.Tree) func(context.Context, types.TipSet
 	}
 }
 
-func setupSigner() (types.MockSigner, address.Address) {
+func setupSigner() (types.MockSigner, []byte) {
 	mockSigner, _ := types.NewMockSignersAndKeyInfo(10)
 
-	blockSignerAddr := mockSigner.Addresses[len(mockSigner.Addresses)-1]
-	return mockSigner, blockSignerAddr
+	signerPubKey := mockSigner.PubKeys[len(mockSigner.Addresses)-1]
+	return mockSigner, signerPubKey
 }

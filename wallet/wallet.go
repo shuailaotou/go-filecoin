@@ -3,6 +3,8 @@ package wallet
 import (
 	"bytes"
 	"fmt"
+	"github.com/filecoin-project/go-filecoin/proofs"
+	"github.com/minio/blake2b-simd"
 	"reflect"
 	"sync"
 
@@ -107,11 +109,11 @@ func (w *Wallet) SignBytes(data []byte, addr address.Address) (types.Signature, 
 	return backend.SignBytes(data, addr)
 }
 
-
-func AddressFromPubKey(w *Wallet, pk []byte) (address.Address, error) {
+// AddressFromPubKey looks up a KeyInfo address associated with a given PublicKey
+func (w *Wallet) AddressFromPubKey(pk []byte) (address.Address, error) {
 	var addr address.Address
 
-	for addr = range w.Addresses() {
+	for _, addr = range w.Addresses() {
 		testPk, err := w.GetPubKeyForAddress(addr)
 		if err != nil {
 			return addr, errors.New("could not fetch public key")
@@ -168,6 +170,29 @@ func (w *Wallet) NewKeyInfo() (*types.KeyInfo, error) {
 	}
 
 	return w.keyInfoForAddr(newAddr)
+}
+
+// CreateTicket computes a valid ticket.
+// 	params:  proof  []byte, minerAddress address.Address.
+//  returns:  []byte, error
+func (w *Wallet) CreateTicket(proof proofs.PoStProof, signerPubKey []byte) (types.Signature, error) {
+
+	var ticket []byte
+
+	signerAddr, err := w.AddressFromPubKey(signerPubKey)
+	if err != nil {
+		return ticket, err
+	}
+
+	buf := append(proof[:], signerAddr.Bytes()...)
+	h := blake2b.Sum256(buf)
+
+	ticket, err = w.SignBytes(h[:], signerAddr)
+	if err != nil {
+		errMsg := fmt.Sprintf("SignBytes error in CreateTicket: %s", err.Error())
+		return ticket, errors.New(errMsg)
+	}
+	return ticket, nil
 }
 
 func (w *Wallet) keyInfoForAddr(addr address.Address) (*types.KeyInfo, error) {

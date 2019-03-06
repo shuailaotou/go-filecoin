@@ -165,17 +165,17 @@ func TestGetMultipleByParent(t *testing.T) {
 	assert := assert.New(t)
 	chainStore := newChainStore()
 
-	mockSigner, _ := types.NewMockSignersAndKeyInfo(1)
-	mockSignerAddr := mockSigner.Addresses[0]
+	mockSigner, ki := types.NewMockSignersAndKeyInfo(2)
+	mockSignerPubKey := ki[0].PublicKey()
 
 	fakeChildParams := chain.FakeChildParams{
-		Parent:     genTS,
-		GenesisCid: genCid,
-		StateRoot:  genStateRoot,
-		MinerAddr:  minerAddress,
-		Nonce:      uint64(5),
-		Signer:     mockSigner,
-		SignerAddr: mockSignerAddr,
+		Parent:      genTS,
+		GenesisCid:  genCid,
+		StateRoot:   genStateRoot,
+		MinerAddr:   minerAddress,
+		Nonce:       uint64(5),
+		Signer:      mockSigner,
+		MinerPubKey: mockSignerPubKey,
 	}
 
 	requirePutTestChain(require, chainStore)

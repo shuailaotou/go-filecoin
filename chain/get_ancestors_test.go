@@ -23,15 +23,17 @@ func setupGetAncestorTests(require *require.Assertions) (context.Context, *hamt.
 // its head.
 func requireGrowChain(ctx context.Context, require *require.Assertions, cst *hamt.CborIpldStore, chainStore chain.Store, numBlocks int) {
 	link := chainStore.Head()
-	signer, _ := types.NewMockSignersAndKeyInfo(1)
-	signerAddr := signer.Addresses[0]
+
+	signer, ki := types.NewMockSignersAndKeyInfo(1)
+	mockSignerPubKey := ki[0].PublicKey()
+
 	for i := 0; i < numBlocks; i++ {
 		fakeChildParams := chain.FakeChildParams{
-			Parent:     link,
-			GenesisCid: genCid,
-			Signer:     signer,
-			SignerAddr: signerAddr,
-			StateRoot:  genStateRoot,
+			Parent:      link,
+			GenesisCid:  genCid,
+			Signer:      signer,
+			MinerPubKey: mockSignerPubKey,
+			StateRoot:   genStateRoot,
 		}
 		linkBlock := chain.RequireMkFakeChild(require, fakeChildParams)
 		requirePutBlocks(require, cst, linkBlock)
@@ -97,8 +99,9 @@ func TestCollectTipSetsOfHeightAtLeastStartingEpochIsNull(t *testing.T) {
 
 	// Now add 10 null blocks and 1 tipset.
 
-	signer, _ := types.NewMockSignersAndKeyInfo(1)
-	signerAddr := signer.Addresses[0]
+	signer, ki := types.NewMockSignersAndKeyInfo(1)
+	mockSignerPubKey := ki[0].PublicKey()
+
 	nullBlocks := uint64(10)
 
 	fakeChildParams := chain.FakeChildParams{
@@ -106,7 +109,7 @@ func TestCollectTipSetsOfHeightAtLeastStartingEpochIsNull(t *testing.T) {
 		GenesisCid:     genCid,
 		NullBlockCount: nullBlocks,
 		Signer:         signer,
-		SignerAddr:     signerAddr,
+		MinerPubKey:    mockSignerPubKey,
 		StateRoot:      genStateRoot,
 	}
 
@@ -223,8 +226,9 @@ func TestGetRecentAncestorsStartingEpochIsNull(t *testing.T) {
 	requireGrowChain(ctx, require, cst, chainStore, len1)
 
 	// Now add 10 null blocks and 1 tipset.
-	signer, _ := types.NewMockSignersAndKeyInfo(1)
-	signerAddr := signer.Addresses[0]
+	signer, ki := types.NewMockSignersAndKeyInfo(1)
+	mockSignerPubKey := ki[0].PublicKey()
+
 	nullBlocks := uint64(10)
 
 	fakeChildParams := chain.FakeChildParams{
@@ -233,7 +237,7 @@ func TestGetRecentAncestorsStartingEpochIsNull(t *testing.T) {
 		StateRoot:      genStateRoot,
 		NullBlockCount: nullBlocks,
 		Signer:         signer,
-		SignerAddr:     signerAddr,
+		MinerPubKey:    mockSignerPubKey,
 	}
 	afterNullBlock := chain.RequireMkFakeChild(require, fakeChildParams)
 	requirePutBlocks(require, cst, afterNullBlock)

@@ -2,8 +2,6 @@ package impl
 
 import (
 	"context"
-	"github.com/filecoin-project/go-filecoin/plumbing"
-	"github.com/filecoin-project/go-filecoin/plumbing/msg"
 
 	"github.com/filecoin-project/go-filecoin/actor/builtin"
 	"github.com/filecoin-project/go-filecoin/address"
@@ -61,14 +59,21 @@ func (api *nodeMining) Once(ctx context.Context) (*types.Block, error) {
 	}
 	minerAddress := minerAddressIf.(address.Address)
 	minerOwnerAddress, err := nd.PorcelainAPI.MinerGetOwnerAddress(ctx, minerAddress)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
+
+	minerPubKey, err := nd.PorcelainAPI.MinerGetKey(ctx, minerAddress)
+	if err != nil {
+		return nil, err
+	}
 
 	getAncestors := func(ctx context.Context, ts types.TipSet, newBlockHeight *types.BlockHeight) ([]types.TipSet, error) {
 		return chain.GetRecentAncestors(ctx, ts, nd.ChainReader, newBlockHeight, consensus.AncestorRoundsNeeded, consensus.LookBackParameter)
 	}
 
 	worker := mining.NewDefaultWorker(nd.MsgPool, getState, getWeight, getAncestors, consensus.NewDefaultProcessor(),
-		nd.PowerTable, nd.Blockstore, nd.CborStore(), minerAddress, minerOwnerAddress, nd.Wallet, blockTime)
+		nd.PowerTable, nd.Blockstore, nd.CborStore(), minerAddress, minerOwnerAddress, minerPubKey, nd.Wallet, blockTime)
 
 	res, err := mining.MineOnce(ctx, worker, mineDelay, ts)
 	if err != nil {

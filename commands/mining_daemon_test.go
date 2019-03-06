@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/filecoin-project/go-filecoin/fixtures"
+	th "github.com/filecoin-project/go-filecoin/testhelpers"
 	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/assert"
 )
 
@@ -19,7 +20,11 @@ func parseInt(assert *assert.Assertions, s string) *big.Int {
 func TestMiningGenBlock(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
-	d := makeTestDaemonWithMinerAndStart(t)
+	d := th.NewDaemon(
+		t,
+		th.WithMiner(fixtures.TestMiners[0]),
+		th.KeyFile(fixtures.KeyFilePaths()[0]),
+	).Start()
 	defer d.ShutdownSuccess()
 
 	addr := fixtures.TestAddresses[0]

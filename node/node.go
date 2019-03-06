@@ -802,12 +802,11 @@ func (node *Node) StartMining(ctx context.Context) error {
 		}
 		processor := consensus.NewDefaultProcessor()
 
-
 		queryer := msg.NewQueryer(node.Repo, node.Wallet, node.ChainReader, node.cborStore, node.Blockstore)
 		res, _, err := queryer.Query(ctx, minerOwnerAddr, minerAddr, "getKey")
 		if err != nil {
 			log.Errorf("could not getKey from miner actor")
-			return false
+			return err
 		}
 		minerPubKey := res[0]
 

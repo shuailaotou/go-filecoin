@@ -2,7 +2,6 @@ package testhelpers
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"gx/ipfs/QmPVkJMTeRC6iBByPWdrRkD3BE5UXsj5HPzb4kPqL186mS/testify/require"
@@ -16,13 +15,17 @@ import (
 	"github.com/filecoin-project/go-filecoin/state"
 	"github.com/filecoin-project/go-filecoin/types"
 	"github.com/filecoin-project/go-filecoin/vm"
-	"github.com/minio/blake2b-simd"
 )
 
 // TestView is an implementation of stateView used for testing the chain
 // manager.  It provides a consistent view that the storage market
 // stores 1 byte and all miners store 0 bytes regardless of inputs.
 type TestView struct{}
+
+// WorkerTestSigner is an interface for a test signer that can create tickets.
+type WorkerTestSigner interface {
+	CreateTicket(proof proofs.PoStProof, signerPubKey []byte) (types.Signature, error)
+}
 
 var _ consensus.PowerTableView = &TestView{}
 
@@ -81,14 +84,10 @@ func (tv *TestPowerTableView) HasPower(ctx context.Context, st state.Tree, bstor
 }
 
 // NewValidTestBlockFromTipSet creates a block for when proofs & power table don't need
-// to be correct.
-func NewValidTestBlockFromTipSet(baseTipSet types.TipSet, stateRootCid cid.Cid, height uint64, minerAddr address.Address) *types.Block {
+// to be correct
+func NewValidTestBlockFromTipSet(baseTipSet types.TipSet, stateRootCid cid.Cid, height uint64, minerAddr address.Address, minerPubKey []byte, signer WorkerTestSigner) *types.Block {
 	postProof := MakeRandomPoSTProofForTest()
-
-	if signer == nil {
-		panic("signer is nil")
-	}
-	ticket := createTicket(postProof, signerAddr, signer)
+	ticket, _ := signer.CreateTicket(postProof, minerPubKey)
 
 	return &types.Block{
 		Miner:        minerAddr,
@@ -196,17 +195,4 @@ func CreateAndApplyTestMessage(t *testing.T, st state.Tree, vms vm.StorageMap, t
 
 func newTestApplier() *consensus.DefaultProcessor {
 	return consensus.NewConfiguredProcessor(&TestSignedMessageValidator{}, &TestBlockRewarder{})
-}
-
-// This is currently to prevent an import cycle error with mining :(
-func createTicket(proof proofs.PoStProof, signerAddr address.Address, signer types.Signer) []byte {
-	buf := append(proof[:], signerAddr.Bytes()...)
-	h := blake2b.Sum256(buf)
-
-	ticket, err := signer.SignBytes(h[:], signerAddr)
-	if err != nil {
-		errMsg := fmt.Sprintf("SignBytes error in testing version of createTicket: %s", err.Error())
-		panic(errMsg)
-	}
-	return ticket
 }
